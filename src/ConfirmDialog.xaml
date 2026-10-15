@@ -4,14 +4,14 @@
         WindowStartupLocation="CenterOwner" SizeToContent="Height"
         Width="460" WindowStyle="None" ResizeMode="NoResize" Background="Transparent"
         AllowsTransparency="True" ShowInTaskbar="False">
-    <Border Background="#1D2129" BorderBrush="#2A2F3A" BorderThickness="1" CornerRadius="14" Margin="16" Padding="24">
+    <Border Background="{DynamicResource Brush.Card}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="14" Margin="16" Padding="24">
         <Border.Effect>
             <DropShadowEffect BlurRadius="24" ShadowDepth="0" Opacity="0.5"/>
         </Border.Effect>
         <StackPanel>
-            <TextBlock x:Name="TitleText" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10"/>
-            <TextBlock x:Name="MessageText" FontSize="13" Foreground="#B8BFCE" TextWrapping="Wrap" Margin="0,0,0,8"/>
-            <TextBlock x:Name="DetailText" FontSize="12" Foreground="#8B93A7" TextWrapping="Wrap" Margin="0,0,0,18"/>
+            <TextBlock x:Name="TitleText" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10" Foreground="{DynamicResource Brush.Text}"/>
+            <TextBlock x:Name="MessageText" FontSize="13" Foreground="{DynamicResource Brush.BodyText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+            <TextBlock x:Name="DetailText" FontSize="12" Foreground="{DynamicResource Brush.SubText}" TextWrapping="Wrap" Margin="0,0,0,18"/>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
