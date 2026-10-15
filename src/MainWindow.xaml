@@ -1,13 +1,13 @@
 <Window x:Class="WinMigrationCleaner.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="WinMigrationCleaner — 硬件迁移残留清理" Height="720" Width="1180"
-        MinHeight="600" MinWidth="980" WindowStartupLocation="CenterScreen"
+        Title="WinMigrationCleaner — 硬件迁移残留清理" Height="740" Width="1200"
+        MinHeight="620" MinWidth="1000" WindowStartupLocation="CenterScreen"
         Background="{StaticResource Brush.Bg}" FontFamily="Segoe UI, Microsoft YaHei UI">
 
     <Window.Resources>
         <Style x:Key="PageTitle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="22"/>
+            <Setter Property="FontSize" Value="21"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
         <Style x:Key="Sub" TargetType="TextBlock">
@@ -15,14 +15,22 @@
             <Setter Property="FontSize" Value="12.5"/>
         </Style>
         <Style x:Key="MetricNum" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="34"/>
+            <Setter Property="FontSize" Value="30"/>
             <Setter Property="FontWeight" Value="Bold"/>
         </Style>
+        <Style x:Key="ChipLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource Brush.SubText}"/>
+            <Setter Property="FontSize" Value="11.5"/>
+        </Style>
+        <Style x:Key="ChipValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
         <Style x:Key="ColHeader" TargetType="GridViewColumnHeader">
-            <Setter Property="Background" Value="#1A1E27"/>
+            <Setter Property="Background" Value="#12161F"/>
             <Setter Property="Foreground" Value="{StaticResource Brush.SubText}"/>
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Padding" Value="10,9"/>
             <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -34,9 +42,6 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>
-        <Style x:Key="LogItem" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12"/>
         </Style>
         <Style x:Key="ListViewBase" TargetType="ListView">
             <Setter Property="Background" Value="Transparent"/>
@@ -58,10 +63,10 @@
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="bd" Property="Background" Value="#232835"/>
+                                            <Setter TargetName="bd" Property="Background" Value="{StaticResource Brush.CardHover}"/>
                                         </Trigger>
                                         <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                                            <Setter TargetName="bd" Property="Background" Value="#191D26"/>
+                                            <Setter TargetName="bd" Property="Background" Value="#131824"/>
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -75,32 +80,40 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="225"/>
+            <ColumnDefinition Width="232"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <!-- ================= Sidebar ================= -->
+        <!-- [Sidebar] -->
         <Border Grid.Column="0" Background="{StaticResource Brush.Panel}" BorderBrush="{StaticResource Brush.Border}" BorderThickness="0,0,1,0">
             <DockPanel>
-                <StackPanel DockPanel.Dock="Top" Margin="20,24,16,8">
+                <StackPanel DockPanel.Dock="Top" Margin="20,26,16,6">
                     <StackPanel Orientation="Horizontal">
-                        <Border Width="34" Height="34" CornerRadius="9" Background="{StaticResource Brush.Accent}">
-                            <TextBlock Text="W" FontSize="18" FontWeight="Bold" Foreground="White"
+                        <Border Width="36" Height="36" CornerRadius="10">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#4D7FFF" Offset="0"/>
+                                    <GradientStop Color="#7A5CFF" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <TextBlock Text="W" FontSize="19" FontWeight="Bold" Foreground="White"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <TextBlock Text="WinMigrationCleaner" FontSize="14" FontWeight="SemiBold"
-                                   VerticalAlignment="Center" Margin="10,0,0,0"/>
+                        <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="WinMigration" FontSize="13.5" FontWeight="SemiBold"/>
+                            <TextBlock Text="Cleaner" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource Brush.Accent}" Margin="0,-2,0,0"/>
+                        </StackPanel>
                     </StackPanel>
-                    <TextBlock Text="硬件迁移残留清理" FontSize="11.5" Foreground="{StaticResource Brush.SubText}" Margin="2,10,0,0"/>
+                    <TextBlock Text="硬件迁移残留清理" FontSize="11" Foreground="{StaticResource Brush.SubText}" Margin="2,12,0,0"/>
                 </StackPanel>
 
-                <StackPanel DockPanel.Dock="Bottom" Margin="16,8,16,16">
-                    <Border Background="#232835" CornerRadius="10" Padding="12,10">
+                <StackPanel DockPanel.Dock="Bottom" Margin="14,8,14,16">
+                    <Border Background="{StaticResource Brush.Card}" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" CornerRadius="11" Padding="12,11">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse x:Name="AdminDot" Width="8" Height="8" Fill="{StaticResource Brush.Warn}" VerticalAlignment="Center"/>
-                                <TextBlock x:Name="AdminText" Text="未提权：可扫描，清理需提权" FontSize="11"
-                                           Foreground="{StaticResource Brush.SubText}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="AdminText" Text="未提权：可扫描，清理需提权" FontSize="10.8"
+                                           Foreground="{StaticResource Brush.SubText}" Margin="8,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
                             </StackPanel>
                             <Button x:Name="BtnElevate" Style="{StaticResource BtnGhost}" Content="以管理员身份重启" FontSize="12"
                                     Margin="0,10,0,0" Padding="8,6" Click="BtnElevate_Click"/>
@@ -108,25 +121,25 @@
                     </Border>
                 </StackPanel>
 
-                <StackPanel Margin="0,16,0,0">
-                    <Button x:Name="NavDash" Style="{StaticResource NavButton}" Tag="active" Click="Nav_Click" Content="⌂  仪表盘"/>
-                    <Button x:Name="NavDevices" Style="{StaticResource NavButton}" Click="Nav_Click" Content="▣  幽灵设备"/>
-                    <Button x:Name="NavServices" Style="{StaticResource NavButton}" Click="Nav_Click" Content="⚙  系统服务"/>
-                    <Button x:Name="NavDrivers" Style="{StaticResource NavButton}" Click="Nav_Click" Content="⛃  驱动包"/>
-                    <Button x:Name="NavAbout" Style="{StaticResource NavButton}" Click="Nav_Click" Content="ℹ  关于"/>
+                <StackPanel Margin="0,20,0,0">
+                    <Button x:Name="NavDash" Style="{StaticResource NavButton}" Tag="active" Click="Nav_Click" Content="仪表盘"/>
+                    <Button x:Name="NavDevices" Style="{StaticResource NavButton}" Click="Nav_Click" Content="幽灵设备"/>
+                    <Button x:Name="NavServices" Style="{StaticResource NavButton}" Click="Nav_Click" Content="系统服务"/>
+                    <Button x:Name="NavDrivers" Style="{StaticResource NavButton}" Click="Nav_Click" Content="驱动包"/>
+                    <Button x:Name="NavAbout" Style="{StaticResource NavButton}" Click="Nav_Click" Content="关于"/>
                 </StackPanel>
             </DockPanel>
         </Border>
 
-        <!-- ================= Content ================= -->
-        <Grid Grid.Column="1" Margin="24,20,24,0">
+        <!-- [Content] -->
+        <Grid Grid.Column="1" Margin="26,22,26,0">
             <Grid.RowDefinitions>
                 <RowDefinition/>
-                <RowDefinition Height="150"/>
-                <RowDefinition Height="30"/>
+                <RowDefinition Height="168"/>
+                <RowDefinition Height="32"/>
             </Grid.RowDefinitions>
 
-            <!-- [Dashboard ] -->
+            <!-- [Page Dashboard] -->
             <ScrollViewer x:Name="PageDash" VerticalScrollBarVisibility="Auto">
                 <StackPanel>
                     <Grid>
@@ -136,7 +149,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel>
                             <TextBlock Style="{StaticResource PageTitle}" Text="仪表盘"/>
-                            <TextBlock Style="{StaticResource Sub}" Margin="0,6,0,0"
+                            <TextBlock Style="{StaticResource Sub}" Margin="0,7,0,0"
                                        Text="检测从旧电脑迁移系统后遗留的幽灵设备、厂商服务和过期驱动包"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
@@ -145,59 +158,92 @@
                         </StackPanel>
                     </Grid>
 
-                    <UniformGrid Columns="3" Margin="0,20,0,0">
-                        <Border Style="{StaticResource CardBorder}" Margin="0,0,12,0">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource Sub}" Text="幽灵设备"/>
-                                <TextBlock x:Name="MetricDevices" Style="{StaticResource MetricNum}" Text="—" Margin="0,6,0,0"/>
-                                <TextBlock Style="{StaticResource Sub}" x:Name="MetricDevicesSub" Text="未扫描"/>
+                    <!-- metric tiles -->
+                    <UniformGrid Columns="3" Margin="0,22,0,0">
+                        <Border Style="{StaticResource CardBorder}" Margin="0,0,14,0" Padding="18,16">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource MetricIcon}" Background="{StaticResource Brush.AccentSoft}">
+                                    <Ellipse Width="10" Height="10" Fill="{StaticResource Brush.Accent}"/>
+                                </Border>
+                                <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock x:Name="MetricDevices" Style="{StaticResource MetricNum}" Text="—"/>
+                                        <TextBlock Style="{StaticResource Sub}" Text=" 项" VerticalAlignment="Bottom" Margin="0,0,0,7"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="MetricDevicesSub" Style="{StaticResource Sub}" Text="幽灵设备 · 未扫描"/>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource CardBorder}" Margin="0,0,12,0">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource Sub}" Text="可疑服务"/>
-                                <TextBlock x:Name="MetricServices" Style="{StaticResource MetricNum}" Text="—" Margin="0,6,0,0"/>
-                                <TextBlock Style="{StaticResource Sub}" x:Name="MetricServicesSub" Text="未扫描"/>
+                        <Border Style="{StaticResource CardBorder}" Margin="0,0,14,0" Padding="18,16">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource MetricIcon}" Background="{StaticResource Brush.WarnSoft}">
+                                    <Ellipse Width="10" Height="10" Fill="{StaticResource Brush.Warn}"/>
+                                </Border>
+                                <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock x:Name="MetricServices" Style="{StaticResource MetricNum}" Text="—"/>
+                                        <TextBlock Style="{StaticResource Sub}" Text=" 项" VerticalAlignment="Bottom" Margin="0,0,0,7"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="MetricServicesSub" Style="{StaticResource Sub}" Text="可疑服务 · 未扫描"/>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource CardBorder}">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource Sub}" Text="未使用驱动包"/>
-                                <TextBlock x:Name="MetricDrivers" Style="{StaticResource MetricNum}" Text="—" Margin="0,6,0,0"/>
-                                <TextBlock Style="{StaticResource Sub}" x:Name="MetricDriversSub" Text="未扫描"/>
+                        <Border Style="{StaticResource CardBorder}" Padding="18,16">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource MetricIcon}" Background="{StaticResource Brush.GreenSoft}">
+                                    <Ellipse Width="10" Height="10" Fill="{StaticResource Brush.Green}"/>
+                                </Border>
+                                <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock x:Name="MetricDrivers" Style="{StaticResource MetricNum}" Text="—"/>
+                                        <TextBlock Style="{StaticResource Sub}" Text=" 项" VerticalAlignment="Bottom" Margin="0,0,0,7"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="MetricDriversSub" Style="{StaticResource Sub}" Text="未使用驱动包 · 未扫描"/>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
                     </UniformGrid>
 
-                    <Border Style="{StaticResource CardBorder}" Margin="0,16,0,20">
+                    <!-- hardware info chips -->
+                    <Border Style="{StaticResource CardBorder}" Margin="0,16,0,20" Padding="18,14">
                         <StackPanel>
                             <TextBlock Style="{StaticResource Sub}" Text="本机硬件"/>
-                            <Grid Margin="0,10,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition/>
-                                    <RowDefinition/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource Sub}" Text="处理器"/>
-                                <TextBlock x:Name="InfoCpu" Grid.Row="0" Grid.Column="1" FontSize="12.5" Margin="10,0,20,6" Text="—"/>
-                                <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource Sub}" Text="显卡"/>
-                                <TextBlock x:Name="InfoGpu" Grid.Row="0" Grid.Column="3" FontSize="12.5" Margin="10,0,0,6" Text="—"/>
-                                <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource Sub}" Text="主板"/>
-                                <TextBlock x:Name="InfoBoard" Grid.Row="1" Grid.Column="1" FontSize="12.5" Margin="10,0,20,0" Text="—"/>
-                                <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource Sub}" Text="内存"/>
-                                <TextBlock x:Name="InfoRam" Grid.Row="1" Grid.Column="3" FontSize="12.5" Margin="10,0,0,0" Text="—"/>
-                            </Grid>
+                            <WrapPanel Margin="0,12,0,2">
+                                <Border Background="#121826" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1"
+                                        CornerRadius="9" Padding="13,8" Margin="0,0,10,8" MaxWidth="330">
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource ChipLabel}" Text="处理器"/>
+                                        <TextBlock x:Name="InfoCpu" Style="{StaticResource ChipValue}" Text="—" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#121826" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1"
+                                        CornerRadius="9" Padding="13,8" Margin="0,0,10,8" MaxWidth="330">
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource ChipLabel}" Text="显卡"/>
+                                        <TextBlock x:Name="InfoGpu" Style="{StaticResource ChipValue}" Text="—" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#121826" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1"
+                                        CornerRadius="9" Padding="13,8" Margin="0,0,10,8" MaxWidth="330">
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource ChipLabel}" Text="主板"/>
+                                        <TextBlock x:Name="InfoBoard" Style="{StaticResource ChipValue}" Text="—" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#121826" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1"
+                                        CornerRadius="9" Padding="13,8" Margin="0,0,10,8">
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource ChipLabel}" Text="内存"/>
+                                        <TextBlock x:Name="InfoRam" Style="{StaticResource ChipValue}" Text="—" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </WrapPanel>
                         </StackPanel>
                     </Border>
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- [Devices ] -->
+            <!-- [Page Devices] -->
             <Grid x:Name="PageDevices" Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -211,16 +257,16 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel>
                         <TextBlock Style="{StaticResource PageTitle}" Text="幽灵设备"/>
-                        <TextBlock Style="{StaticResource Sub}" Margin="0,6,0,0"
+                        <TextBlock Style="{StaticResource Sub}" Margin="0,7,0,0"
                                    Text="已断开硬件的残留记录。移除后重新插入设备会被 Windows 重新识别。"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
                         <Button x:Name="BtnScanDevices" Style="{StaticResource BtnGhost}" Content="扫描" Click="BtnScanDevices_Click"/>
-                        <Button x:Name="BtnSelectAllDevices" Style="{StaticResource BtnGhost}" Content="全选" Margin="8,0,0,0" Click="BtnSelectAllDevices_Click"/>
+                        <Button x:Name="BtnSelectAllDevices" Style="{StaticResource BtnGhost}" Content="全选 / 取消" Margin="8,0,0,0" Click="BtnSelectAllDevices_Click"/>
                         <Button x:Name="BtnRemoveDevices" Style="{StaticResource BtnDanger}" Content="移除所选" Margin="8,0,0,0" Click="BtnRemoveDevices_Click"/>
                     </StackPanel>
                 </Grid>
-                <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,14,0,0" Padding="8">
+                <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,16,0,0" Padding="8">
                     <ListView x:Name="ListDevices" Style="{StaticResource ListViewBase}" AlternationCount="2">
                         <ListView.View>
                             <GridView>
@@ -234,17 +280,15 @@
                                 </GridViewColumn>
                                 <GridViewColumn Header="设备名称" Width="360" DisplayMemberBinding="{Binding Name}"/>
                                 <GridViewColumn Header="类别" Width="150" DisplayMemberBinding="{Binding Class}"/>
-                                <GridViewColumn Header="实例 ID" Width="420" DisplayMemberBinding="{Binding InstanceId}"/>
+                                <GridViewColumn Header="实例 ID" Width="430" DisplayMemberBinding="{Binding InstanceId}"/>
                             </GridView>
                         </ListView.View>
                     </ListView>
                 </Border>
-                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="4,10,0,4">
-                    <TextBlock x:Name="DevicesSummary" Style="{StaticResource Sub}" Text="尚未扫描。"/>
-                </StackPanel>
+                <TextBlock x:Name="DevicesSummary" Grid.Row="2" Style="{StaticResource Sub}" Margin="6,10,0,4" Text="尚未扫描。"/>
             </Grid>
 
-            <!-- [Services ] -->
+            <!-- [Page Services] -->
             <Grid x:Name="PageServices" Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -258,7 +302,7 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel>
                         <TextBlock Style="{StaticResource PageTitle}" Text="系统服务"/>
-                        <TextBlock Style="{StaticResource Sub}" Margin="0,6,0,0"
+                        <TextBlock Style="{StaticResource Sub}" Margin="0,7,0,0"
                                    Text="检测到来自其它硬件厂商的驱动服务。删除前请确认当前电脑已不需要它们。"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
@@ -267,7 +311,7 @@
                         <Button x:Name="BtnDeleteServices" Style="{StaticResource BtnDanger}" Content="删除所选" Margin="8,0,0,0" Click="BtnDeleteServices_Click"/>
                     </StackPanel>
                 </Grid>
-                <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,14,0,0" Padding="8">
+                <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,16,0,0" Padding="8">
                     <ListView x:Name="ListServices" Style="{StaticResource ListViewBase}" AlternationCount="2">
                         <ListView.View>
                             <GridView>
@@ -280,20 +324,18 @@
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>
                                 <GridViewColumn Header="服务名" Width="220" DisplayMemberBinding="{Binding Name}"/>
-                                <GridViewColumn Header="显示名" Width="240" DisplayMemberBinding="{Binding DisplayName}"/>
+                                <GridViewColumn Header="显示名" Width="250" DisplayMemberBinding="{Binding DisplayName}"/>
                                 <GridViewColumn Header="状态" Width="90" DisplayMemberBinding="{Binding State}"/>
                                 <GridViewColumn Header="启动类型" Width="100" DisplayMemberBinding="{Binding StartMode}"/>
-                                <GridViewColumn Header="判定依据" Width="240" DisplayMemberBinding="{Binding Reason}"/>
+                                <GridViewColumn Header="判定依据" Width="220" DisplayMemberBinding="{Binding Reason}"/>
                             </GridView>
                         </ListView.View>
                     </ListView>
                 </Border>
-                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="4,10,0,4">
-                    <TextBlock x:Name="ServicesSummary" Style="{StaticResource Sub}" Text="尚未扫描。"/>
-                </StackPanel>
+                <TextBlock x:Name="ServicesSummary" Grid.Row="2" Style="{StaticResource Sub}" Margin="6,10,0,4" Text="尚未扫描。"/>
             </Grid>
 
-            <!-- [Drivers ] -->
+            <!-- [Page Drivers] -->
             <Grid x:Name="PageDrivers" Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -307,15 +349,15 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel>
                         <TextBlock Style="{StaticResource PageTitle}" Text="驱动包（DriverStore）"/>
-                        <TextBlock Style="{StaticResource Sub}" Margin="0,6,0,0"
-                                   Text="未被任何在线设备引用的驱动包。「可清理」为厂商残留；「软件」属于已安装软件，请勿删除；「保留」为当前平台组件。"/>
+                        <TextBlock Style="{StaticResource Sub}" Margin="0,7,0,0"
+                                   Text="未被在线设备引用的驱动包。仅「可清理」项允许删除；「软件」属于已安装软件；「保留」为当前平台组件。"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
                         <Button x:Name="BtnScanDrivers" Style="{StaticResource BtnGhost}" Content="扫描" Click="BtnScanDrivers_Click"/>
                         <Button x:Name="BtnDeleteDrivers" Style="{StaticResource BtnDanger}" Content="删除所选「可清理」" Margin="8,0,0,0" Click="BtnDeleteDrivers_Click"/>
                     </StackPanel>
                 </Grid>
-                <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,14,0,0" Padding="8">
+                <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,16,0,0" Padding="8">
                     <ListView x:Name="ListDrivers" Style="{StaticResource ListViewBase}" AlternationCount="2">
                         <ListView.View>
                             <GridView>
@@ -330,39 +372,37 @@
                                 </GridViewColumn>
                                 <GridViewColumn Header="发布名" Width="120" DisplayMemberBinding="{Binding PublishedName}"/>
                                 <GridViewColumn Header="原始 INF" Width="220" DisplayMemberBinding="{Binding OriginalName}"/>
-                                <GridViewColumn Header="提供商" Width="220" DisplayMemberBinding="{Binding Provider}"/>
+                                <GridViewColumn Header="提供商" Width="230" DisplayMemberBinding="{Binding Provider}"/>
                                 <GridViewColumn Header="版本" Width="170" DisplayMemberBinding="{Binding Version}"/>
                                 <GridViewColumn Header="判定" Width="110" DisplayMemberBinding="{Binding Risk}"/>
                             </GridView>
                         </ListView.View>
                     </ListView>
                 </Border>
-                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="4,10,0,4">
-                    <TextBlock x:Name="DriversSummary" Style="{StaticResource Sub}" Text="尚未扫描。"/>
-                </StackPanel>
+                <TextBlock x:Name="DriversSummary" Grid.Row="2" Style="{StaticResource Sub}" Margin="6,10,0,4" Text="尚未扫描。"/>
             </Grid>
 
-            <!-- [About ] -->
-            <ScrollViewer x:Name="PageAbout" VerticalScrollBarVisibility="Auto">
-                <StackPanel MaxWidth="760" HorizontalAlignment="Left">
+            <!-- [Page About] -->
+            <ScrollViewer x:Name="PageAbout" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+                <StackPanel MaxWidth="780" HorizontalAlignment="Left">
                     <TextBlock Style="{StaticResource PageTitle}" Text="关于 WinMigrationCleaner"/>
-                    <TextBlock Foreground="#B8BFCE" FontSize="13" TextWrapping="Wrap" Margin="0,14,0,0"
-                               Text="当你把 Windows 系统从一台电脑迁移到另一台（换主板、换机装老系统、笔记本换台式机），旧硬件会在系统里留下三类残留：幽灵设备记录、厂商驱动服务和 DriverStore 驱动包。本工具把这三类残留的检测与清理整合到一起，并内置安全保护：自动保留当前平台的核心驱动套件，识别属于已安装软件的驱动包，并默认以「只报告」方式呈现可清理项，所有删除操作均需显式确认。"/>
-                    <TextBlock Foreground="#B8BFCE" FontSize="13" TextWrapping="Wrap" Margin="0,12,0,0"
+                    <TextBlock Foreground="#B9C2D4" FontSize="13" TextWrapping="Wrap" LineHeight="22" Margin="0,16,0,0"
+                               Text="当你把 Windows 系统从一台电脑迁移到另一台（换主板、换机装老系统、笔记本换台式机），旧硬件会在系统里留下三类残留：幽灵设备记录、厂商驱动服务和 DriverStore 驱动包。本工具把这三类残留的检测与清理整合到一起，并内置多层安全保护：自动保留当前平台的核心驱动套件，识别属于已安装软件的驱动包，并默认以「只报告」方式呈现可清理项，所有删除操作均需显式确认。"/>
+                    <TextBlock Foreground="#B9C2D4" FontSize="13" TextWrapping="Wrap" LineHeight="22" Margin="0,12,0,0"
                                Text="本项目使用 Windows 内置的 WMI 与 pnputil，不含任何第三方二进制。所有破坏性操作均写入活动日志。"/>
-                    <Border Style="{StaticResource CardBorder}" Margin="0,20,0,0">
+                    <Border Style="{StaticResource CardBorder}" Margin="0,22,0,0">
                         <StackPanel>
                             <TextBlock FontWeight="SemiBold" Text="安全边界"/>
-                            <TextBlock Foreground="#8B93A7" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"
+                            <TextBlock Foreground="{StaticResource Brush.SubText}" FontSize="12" LineHeight="21" TextWrapping="Wrap" Margin="0,10,0,0"
                                        Text="• 幽灵设备：仅移除 Present=false 的记录，重新插入硬件会自动重装&#10;• 驱动包：仅允许删除标记为「可清理」的项，删除前二次确认&#10;• 服务：仅显示命中厂商关键字的候选，删除前单独确认&#10;• 建议操作前创建系统还原点；删除后重启一次让变更完全生效"/>
                         </StackPanel>
                     </Border>
-                    <TextBlock Style="{StaticResource Sub}" Margin="0,16,0,20" Text="MIT License · v1.0.0"/>
+                    <TextBlock Style="{StaticResource Sub}" Margin="0,18,0,20" Text="MIT License · v1.0.0"/>
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- [Activity log ] -->
-            <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,14,0,0" Padding="10,8">
+            <!-- [Activity log] -->
+            <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,16,0,0" Padding="14,10">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -370,7 +410,7 @@
                     </Grid.RowDefinitions>
                     <Grid>
                         <TextBlock Style="{StaticResource Sub}" Text="活动日志（每次操作都有记录）"/>
-                        <Button x:Name="BtnClearLog" Style="{StaticResource BtnGhost}" Content="清空" FontSize="11" Padding="8,3"
+                        <Button x:Name="BtnClearLog" Style="{StaticResource BtnGhost}" Content="清空" FontSize="11" Padding="9,3"
                                 HorizontalAlignment="Right" VerticalAlignment="Top" Click="BtnClearLog_Click"/>
                     </Grid>
                     <ListBox x:Name="LogList" Grid.Row="1" Background="Transparent" BorderThickness="0"
@@ -379,35 +419,40 @@
                              FontFamily="Consolas, Microsoft YaHei UI">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Style="{StaticResource LogItem}" TextWrapping="Wrap">
-                                    <Run Text="{Binding Time, Mode=OneWay}" Foreground="#5B6272"/>
-                                    <Run Text="{Binding Message, Mode=OneWay}">
-                                        <Run.Style>
-                                            <Style TargetType="Run">
-                                                <Setter Property="Foreground" Value="#B8BFCE"/>
+                                <Grid Margin="0,1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="66"/>
+                                        <ColumnDefinition/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Time, Mode=OneWay}" FontSize="11.5" Foreground="#57607A"
+                                               FontFamily="Consolas, Microsoft YaHei UI" VerticalAlignment="Top"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Message, Mode=OneWay}" FontSize="12" TextWrapping="Wrap">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#B9C2D4"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding Kind}" Value="ok"><Setter Property="Foreground" Value="{StaticResource Brush.Green}"/></DataTrigger>
                                                     <DataTrigger Binding="{Binding Kind}" Value="warn"><Setter Property="Foreground" Value="{StaticResource Brush.Warn}"/></DataTrigger>
                                                     <DataTrigger Binding="{Binding Kind}" Value="err"><Setter Property="Foreground" Value="{StaticResource Brush.Danger}"/></DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </Run.Style>
-                                    </Run>
-                                </TextBlock>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
                 </Grid>
             </Border>
 
-            <!-- [Status bar ] -->
-            <Grid Grid.Row="2" Margin="4,6,4,0">
+            <!-- [Status bar] -->
+            <Grid Grid.Row="2" Margin="6,8,6,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock x:Name="StatusText" Style="{StaticResource Sub}" Text="就绪" VerticalAlignment="Center"/>
-                <Button x:Name="BtnBusy" Grid.Column="1" Style="{StaticResource BtnGhost}" Content="■ 停止" FontSize="11" Padding="8,3"
+                <Button x:Name="BtnBusy" Grid.Column="1" Style="{StaticResource BtnGhost}" Content="■ 停止" FontSize="11" Padding="9,3"
                         Visibility="Collapsed" Click="BtnBusy_Click"/>
             </Grid>
         </Grid>
