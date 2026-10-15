@@ -1,0 +1,28 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- ===== LIGHT THEME ===== -->
+    <SolidColorBrush x:Key="Brush.Bg" Color="#F3F5F9"/>
+    <SolidColorBrush x:Key="Brush.Panel" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.Card" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.CardHover" Color="#F0F4FB"/>
+    <SolidColorBrush x:Key="Brush.Border" Color="#DDE4EF"/>
+    <SolidColorBrush x:Key="Brush.Text" Color="#141B29"/>
+    <SolidColorBrush x:Key="Brush.BodyText" Color="#2A3547"/>
+    <SolidColorBrush x:Key="Brush.SubText" Color="#5D6B82"/>
+    <SolidColorBrush x:Key="Brush.LogText" Color="#2A3547"/>
+    <SolidColorBrush x:Key="Brush.LogTime" Color="#9AA6BA"/>
+    <SolidColorBrush x:Key="Brush.Accent" Color="#3B6EF6"/>
+    <SolidColorBrush x:Key="Brush.AccentHover" Color="#5582FF"/>
+    <SolidColorBrush x:Key="Brush.AccentSoft" Color="#E4EDFF"/>
+    <SolidColorBrush x:Key="Brush.AccentText" Color="#2B5BDB"/>
+    <SolidColorBrush x:Key="Brush.NavHover" Color="#EDF1F8"/>
+    <SolidColorBrush x:Key="Brush.RowAlt" Color="#F7F9FC"/>
+    <SolidColorBrush x:Key="Brush.Chip" Color="#F3F6FB"/>
+    <SolidColorBrush x:Key="Brush.Green" Color="#0FA968"/>
+    <SolidColorBrush x:Key="Brush.GreenSoft" Color="#DFF5EA"/>
+    <SolidColorBrush x:Key="Brush.Warn" Color="#D98A00"/>
+    <SolidColorBrush x:Key="Brush.WarnSoft" Color="#FFF3DA"/>
+    <SolidColorBrush x:Key="Brush.Danger" Color="#E5484D"/>
+    <SolidColorBrush x:Key="Brush.DangerHover" Color="#F06066"/>
+    <SolidColorBrush x:Key="Brush.DangerSoft" Color="#FDE8E8"/>
+</ResourceDictionary>

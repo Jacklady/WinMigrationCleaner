@@ -4,33 +4,19 @@
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
-            <!-- ===== Palette: deep slate + electric blue accent ===== -->
-            <SolidColorBrush x:Key="Brush.Bg" Color="#0B0E14"/>
-            <SolidColorBrush x:Key="Brush.Panel" Color="#10141C"/>
-            <SolidColorBrush x:Key="Brush.Card" Color="#151A24"/>
-            <SolidColorBrush x:Key="Brush.CardHover" Color="#1B2230"/>
-            <SolidColorBrush x:Key="Brush.Border" Color="#232B3A"/>
-            <SolidColorBrush x:Key="Brush.Text" Color="#E8ECF4"/>
-            <SolidColorBrush x:Key="Brush.SubText" Color="#8C97AB"/>
-            <SolidColorBrush x:Key="Brush.Accent" Color="#4D7FFF"/>
-            <SolidColorBrush x:Key="Brush.AccentHover" Color="#6B94FF"/>
-            <SolidColorBrush x:Key="Brush.AccentSoft" Color="#1A2745"/>
-            <SolidColorBrush x:Key="Brush.Green" Color="#34D399"/>
-            <SolidColorBrush x:Key="Brush.GreenSoft" Color="#12301F"/>
-            <SolidColorBrush x:Key="Brush.Warn" Color="#F5A623"/>
-            <SolidColorBrush x:Key="Brush.WarnSoft" Color="#33270F"/>
-            <SolidColorBrush x:Key="Brush.Danger" Color="#F87171"/>
-            <SolidColorBrush x:Key="Brush.DangerHover" Color="#FB8A8A"/>
-            <SolidColorBrush x:Key="Brush.DangerSoft" Color="#391A1C"/>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Theme dictionary is inserted at index 0 by App.OnStartup -->
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- All brushes are referenced with DynamicResource so the theme can switch at runtime -->
 
             <Style TargetType="TextBlock">
-                <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
             </Style>
 
-            <!-- ===== Sidebar nav ===== -->
             <Style x:Key="NavButton" TargetType="Button">
                 <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="Foreground" Value="{StaticResource Brush.SubText}"/>
+                <Setter Property="Foreground" Value="{DynamicResource Brush.SubText}"/>
                 <Setter Property="FontSize" Value="13.5"/>
                 <Setter Property="Height" Value="42"/>
                 <Setter Property="Margin" Value="10,3"/>
@@ -46,12 +32,12 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="bd" Property="Background" Value="#1A2130"/>
-                                    <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                                    <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.NavHover}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
                                 </Trigger>
                                 <Trigger Property="Tag" Value="active">
-                                    <Setter TargetName="bd" Property="Background" Value="{StaticResource Brush.AccentSoft}"/>
-                                    <Setter Property="Foreground" Value="#B9CCFF"/>
+                                    <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.AccentSoft}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource Brush.AccentText}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -59,9 +45,8 @@
                 </Setter>
             </Style>
 
-            <!-- ===== Buttons ===== -->
             <Style x:Key="BtnPrimary" TargetType="Button">
-                <Setter Property="Background" Value="{StaticResource Brush.Accent}"/>
+                <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
                 <Setter Property="Foreground" Value="White"/>
                 <Setter Property="FontSize" Value="13"/>
                 <Setter Property="Padding" Value="18,9"/>
@@ -75,7 +60,7 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="bd" Property="Background" Value="{StaticResource Brush.AccentHover}"/>
+                                    <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.AccentHover}"/>
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="True">
                                     <Setter TargetName="bd" Property="Opacity" Value="0.75"/>
@@ -90,7 +75,7 @@
             </Style>
 
             <Style x:Key="BtnDanger" TargetType="Button" BasedOn="{StaticResource BtnPrimary}">
-                <Setter Property="Background" Value="{StaticResource Brush.Danger}"/>
+                <Setter Property="Background" Value="{DynamicResource Brush.Danger}"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
@@ -99,7 +84,7 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="bd" Property="Background" Value="{StaticResource Brush.DangerHover}"/>
+                                    <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.DangerHover}"/>
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="True">
                                     <Setter TargetName="bd" Property="Opacity" Value="0.75"/>
@@ -114,12 +99,12 @@
             </Style>
 
             <Style x:Key="BtnGhost" TargetType="Button">
-                <Setter Property="Background" Value="#1A2130"/>
-                <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                <Setter Property="Background" Value="{DynamicResource Brush.Card}"/>
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
                 <Setter Property="FontSize" Value="13"/>
                 <Setter Property="Padding" Value="15,8"/>
                 <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Template">
                     <Setter.Value>
@@ -131,8 +116,8 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="bd" Property="Background" Value="#232C3E"/>
-                                    <Setter TargetName="bd" Property="BorderBrush" Value="#35415A"/>
+                                    <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.CardHover}"/>
+                                    <Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="True">
                                     <Setter TargetName="bd" Property="Opacity" Value="0.75"/>
@@ -147,14 +132,13 @@
             </Style>
 
             <Style x:Key="CardBorder" TargetType="Border">
-                <Setter Property="Background" Value="{StaticResource Brush.Card}"/>
-                <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
+                <Setter Property="Background" Value="{DynamicResource Brush.Card}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="CornerRadius" Value="14"/>
                 <Setter Property="Padding" Value="18"/>
             </Style>
 
-            <!-- ===== Metric tile ===== -->
             <Style x:Key="MetricIcon" TargetType="Border">
                 <Setter Property="Width" Value="40"/>
                 <Setter Property="Height" Value="40"/>
