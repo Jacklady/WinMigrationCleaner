@@ -48,6 +48,12 @@ namespace WinMigrationCleaner
         public string Kind { get; set; } = "info"; // info / ok / warn / err
     }
 
+    public class HardwareRow
+    {
+        public string Label { get; set; } = "";
+        public string Value { get; set; } = "";
+    }
+
     public class SystemSummary
     {
         public string Cpu { get; set; } = "—";

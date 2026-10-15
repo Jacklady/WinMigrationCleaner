@@ -209,40 +209,29 @@
                         </Border>
                     </UniformGrid>
 
-                    <!-- hardware info chips -->
-                    <Border Style="{StaticResource CardBorder}" Margin="0,16,0,20" Padding="18,14">
+                    <!-- hardware info list -->
+                    <Border Style="{DynamicResource CardBorder}" Margin="0,16,0,20" Padding="18,14">
                         <StackPanel>
-                            <TextBlock Style="{StaticResource Sub}" Text="本机硬件"/>
-                            <WrapPanel Margin="0,12,0,2">
-                                <Border Background="{DynamicResource Brush.Chip}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
-                                        CornerRadius="9" Padding="13,8" Margin="0,0,10,8" MaxWidth="330">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource ChipLabel}" Text="处理器"/>
-                                        <TextBlock x:Name="InfoCpu" Style="{StaticResource ChipValue}" Text="—" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-                                <Border Background="{DynamicResource Brush.Chip}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
-                                        CornerRadius="9" Padding="13,8" Margin="0,0,10,8" MaxWidth="330">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource ChipLabel}" Text="显卡"/>
-                                        <TextBlock x:Name="InfoGpu" Style="{StaticResource ChipValue}" Text="—" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-                                <Border Background="{DynamicResource Brush.Chip}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
-                                        CornerRadius="9" Padding="13,8" Margin="0,0,10,8" MaxWidth="330">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource ChipLabel}" Text="主板"/>
-                                        <TextBlock x:Name="InfoBoard" Style="{StaticResource ChipValue}" Text="—" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-                                <Border Background="{DynamicResource Brush.Chip}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
-                                        CornerRadius="9" Padding="13,8" Margin="0,0,10,8">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource ChipLabel}" Text="内存"/>
-                                        <TextBlock x:Name="InfoRam" Style="{StaticResource ChipValue}" Text="—" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </Border>
-                            </WrapPanel>
+                            <TextBlock Style="{DynamicResource Sub}" Text="本机硬件"/>
+                            <ItemsControl x:Name="InfoList" Margin="0,12,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,11">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="64"/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+                                                <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Label}" FontSize="12" Foreground="{DynamicResource Brush.SubText}" Margin="8,0,0,0"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding Value}" FontSize="12.5"
+                                                       Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" Margin="10,0,0,0"
+                                                       LineHeight="19"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </Border>
                 </StackPanel>
