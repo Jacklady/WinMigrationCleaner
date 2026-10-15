@@ -139,6 +139,16 @@
                 <Setter Property="Padding" Value="18"/>
             </Style>
 
+            <Style x:Key="MetricCard" TargetType="Border" BasedOn="{StaticResource CardBorder}">
+                <Setter Property="Cursor" Value="Hand"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource Brush.CardHover}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
             <Style x:Key="MetricIcon" TargetType="Border">
                 <Setter Property="Width" Value="40"/>
                 <Setter Property="Height" Value="40"/>

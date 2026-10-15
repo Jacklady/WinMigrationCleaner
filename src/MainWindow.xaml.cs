@@ -84,6 +84,21 @@ namespace WinMigrationCleaner
 
         List<HardwareRow>? _hwRows;
 
+        void MetricCard_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (sender is Border b && b.Tag is string page)
+            {
+                Button target = page switch
+                {
+                    "devices" => NavDevices,
+                    "services" => NavServices,
+                    "drivers" => NavDrivers,
+                    _ => NavDash
+                };
+                Nav_Click(target, null!);
+            }
+        }
+
         void Nav_Click(object sender, RoutedEventArgs e)
         {
             var btn = (Button)sender;

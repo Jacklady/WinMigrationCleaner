@@ -156,7 +156,7 @@
                         <StackPanel>
                             <TextBlock Style="{StaticResource PageTitle}" Text="仪表盘"/>
                             <TextBlock Style="{StaticResource Sub}" Margin="0,7,0,0"
-                                       Text="检测从旧电脑迁移系统后遗留的幽灵设备、厂商服务和过期驱动包"/>
+                                       Text="检测从旧电脑迁移系统后遗留的幽灵设备、厂商服务和过期驱动包 · 点击下方卡片可跳转对应清理页"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
                             <Button x:Name="BtnScanAll" Style="{StaticResource BtnPrimary}" Content="开始全面扫描" Click="BtnScanAll_Click"/>
@@ -166,7 +166,7 @@
 
                     <!-- metric tiles -->
                     <UniformGrid Columns="3" Margin="0,22,0,0">
-                        <Border Style="{StaticResource CardBorder}" Margin="0,0,14,0" Padding="18,16">
+                        <Border Style="{StaticResource MetricCard}" Margin="0,0,14,0" Padding="18,16" Tag="devices" MouseLeftButtonUp="MetricCard_Click">
                             <StackPanel Orientation="Horizontal">
                                 <Border Style="{StaticResource MetricIcon}" Background="{DynamicResource Brush.AccentSoft}">
                                     <Ellipse Width="10" Height="10" Fill="{DynamicResource Brush.Accent}"/>
@@ -181,7 +181,7 @@
                                 </StackPanel>
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource CardBorder}" Margin="0,0,14,0" Padding="18,16">
+                        <Border Style="{StaticResource MetricCard}" Margin="0,0,14,0" Padding="18,16" Tag="services" MouseLeftButtonUp="MetricCard_Click">
                             <StackPanel Orientation="Horizontal">
                                 <Border Style="{StaticResource MetricIcon}" Background="{DynamicResource Brush.WarnSoft}">
                                     <Ellipse Width="10" Height="10" Fill="{DynamicResource Brush.Warn}"/>
@@ -196,7 +196,7 @@
                                 </StackPanel>
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource CardBorder}" Padding="18,16">
+                        <Border Style="{StaticResource MetricCard}" Padding="18,16" Tag="drivers" MouseLeftButtonUp="MetricCard_Click">
                             <StackPanel Orientation="Horizontal">
                                 <Border Style="{StaticResource MetricIcon}" Background="{DynamicResource Brush.GreenSoft}">
                                     <Ellipse Width="10" Height="10" Fill="{DynamicResource Brush.Green}"/>
