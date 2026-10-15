@@ -12,12 +12,16 @@ namespace WinMigrationCleaner
 
         public static string CurrentTheme { get; private set; } = "light";
         public static string? AutoScreenshot { get; private set; }
+        public static string? AutoScreenshotPage { get; private set; }
 
         protected override void OnStartup(StartupEventArgs e)
         {
             // diagnostic: --screenshot <path> renders the window to PNG and exits
             if (e.Args.Length >= 2 && e.Args[0] == "--screenshot")
+            {
                 AutoScreenshot = e.Args[1];
+                if (e.Args.Length >= 3) AutoScreenshotPage = e.Args[2];
+            }
             // pnputil / WMI output on Chinese Windows uses codepage 936 (GBK)
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 

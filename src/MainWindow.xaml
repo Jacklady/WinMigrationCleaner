@@ -141,7 +141,8 @@
             <Grid.RowDefinitions>
                 <RowDefinition/>
                 <RowDefinition Height="168"/>
-                <RowDefinition Height="32"/>
+                <RowDefinition Height="10"/>
+                <RowDefinition Height="30"/>
             </Grid.RowDefinitions>
 
             <!-- [Page Dashboard] -->
@@ -252,7 +253,7 @@
                     <StackPanel>
                         <TextBlock Style="{StaticResource PageTitle}" Text="幽灵设备"/>
                         <TextBlock Style="{StaticResource Sub}" Margin="0,7,0,0"
-                                   Text="已断开硬件的残留记录。移除后重新插入设备会被 Windows 重新识别。"/>
+                                   Text="列出全部设备：正在工作的标记为「本机所需」，已断开硬件的残留记录标记为「幽灵设备」（可安全移除）。"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
                         <Button x:Name="BtnScanDevices" Style="{StaticResource BtnGhost}" Content="扫描" Click="BtnScanDevices_Click"/>
@@ -261,6 +262,7 @@
                     </StackPanel>
                 </Grid>
                 <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,16,0,0" Padding="8">
+                    <Grid>
                     <ListView x:Name="ListDevices" Style="{StaticResource ListViewBase}" AlternationCount="2">
                         <ListView.View>
                             <GridView>
@@ -268,18 +270,26 @@
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
                                             <CheckBox IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      IsEnabled="{Binding CanSelect}"
                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>
-                                <GridViewColumn Header="设备名称" Width="360" DisplayMemberBinding="{Binding Name}"/>
-                                <GridViewColumn Header="类别" Width="150" DisplayMemberBinding="{Binding Class}"/>
-                                <GridViewColumn Header="实例 ID" Width="430" DisplayMemberBinding="{Binding InstanceId}"/>
+                                <GridViewColumn Header="设备名称" Width="320" DisplayMemberBinding="{Binding Name}"/>
+                                <GridViewColumn Header="类别" Width="120" DisplayMemberBinding="{Binding Class}"/>
+                                <GridViewColumn Header="状态" Width="96" DisplayMemberBinding="{Binding Status}"/>
+                                <GridViewColumn Header="实例 ID" Width="380" DisplayMemberBinding="{Binding InstanceId}"/>
                             </GridView>
                         </ListView.View>
                     </ListView>
+                    <TextBlock x:Name="DevicesEmpty" Text="没有发现幽灵设备 —— 当前硬件的记录都在正常工作"
+                               FontSize="13" Foreground="{DynamicResource Brush.SubText}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                    </Grid>
                 </Border>
                 <TextBlock x:Name="DevicesSummary" Grid.Row="2" Style="{StaticResource Sub}" Margin="6,10,0,4" Text="尚未扫描。"/>
+                <!-- empty-state placeholder for devices page -->
+
             </Grid>
 
             <!-- [Page Services] -->
@@ -439,8 +449,13 @@
                 </Grid>
             </Border>
 
+            <!-- [Progress bar] -->
+            <ProgressBar x:Name="MainProgress" Grid.Row="2" Height="6" Visibility="Collapsed"
+                         Foreground="{DynamicResource Brush.Accent}" Background="{DynamicResource Brush.Chip}"
+                         BorderThickness="0"/>
+
             <!-- [Status bar] -->
-            <Grid Grid.Row="2" Margin="6,8,6,0">
+            <Grid Grid.Row="3" Margin="6,6,6,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
                     <ColumnDefinition Width="Auto"/>

@@ -276,6 +276,33 @@ namespace WinMigrationCleaner
             return rows;
         }
 
+        // ---------------- Device inventory (all devices, ghost-flagged) ----------------
+        public static List<PhantomDevice> ScanAllDevices()
+        {
+            var list = new List<PhantomDevice>();
+            using var searcher = new ManagementObjectSearcher("SELECT Name, PNPClass, DeviceID, Present, ConfigManagerErrorCode FROM Win32_PnPEntity");
+            foreach (var o in searcher.Get())
+            {
+                bool present = Equals(GetPropPub(o, "Present"), true);
+                int code = Convert.ToInt32(GetPropPub(o, "ConfigManagerErrorCode") ?? 0);
+                bool ghost = !present || code == 45;
+                list.Add(new PhantomDevice
+                {
+                    Name = o["Name"]?.ToString() ?? "(unknown)",
+                    Class = o["PNPClass"]?.ToString() ?? "",
+                    InstanceId = o["DeviceID"]?.ToString() ?? "",
+                    IsGhost = ghost,
+                    Selected = ghost
+                });
+            }
+            return list.OrderBy(d => d.IsGhost ? 0 : 1).ThenBy(d => d.Class).ThenBy(d => d.Name).ToList();
+        }
+
+        static object? GetPropPub(ManagementBaseObject o, string name)
+        {
+            try { return o[name]; } catch { return null; }
+        }
+
         // ---------------- Phantom devices ----------------
         public static List<PhantomDevice> ScanPhantomDevices()
         {
