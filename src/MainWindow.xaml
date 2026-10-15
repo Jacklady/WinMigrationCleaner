@@ -29,7 +29,7 @@
             <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
         </Style>
-        <Style x:Key="ColHeader" TargetType="GridViewColumnHeader">
+        <Style TargetType="GridViewColumnHeader">
             <Setter Property="Background" Value="{DynamicResource Brush.Chip}"/>
             <Setter Property="Foreground" Value="{DynamicResource Brush.SubText}"/>
             <Setter Property="FontSize" Value="12"/>
