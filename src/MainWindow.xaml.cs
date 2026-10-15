@@ -39,10 +39,18 @@ namespace WinMigrationCleaner
             if (App.AutoScreenshot != null)
             {
                 var path = App.AutoScreenshot;
+                var page = App.AutoScreenshotPage;
                 Dispatcher.BeginInvoke(new Action(async () =>
                 {
                     try
                     {
+                        if (page == "devices")
+                        {
+                            var devices = await Task.Run(Scanner.ScanAllDevices);
+                            ListDevices.ItemsSource = new ObservableCollection<PhantomDevice>(devices);
+                            UpdateDeviceMetrics(devices);
+                            Nav_Click(NavDevices, null);
+                        }
                         await Task.Delay(400);
                         var rtb = new RenderTargetBitmap(
                             (int)ActualWidth, (int)ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
@@ -87,8 +95,11 @@ namespace WinMigrationCleaner
 
         void Status(string s) => StatusText.Text = s;
 
-        void SetBusy(bool busy, string? label = null)
+        void SetBusy(bool busy, string? label = null, bool determinate = false)
         {
+            MainProgress.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
+            MainProgress.IsIndeterminate = !determinate;
+            if (determinate) MainProgress.Value = 0;
             BtnBusy.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
             BtnBusy.Content = busy ? "■ 停止" : "■ 停止";
             foreach (var b in new Button?[] { BtnScanAll, BtnExportReport, BtnScanDevices, BtnRemoveDevices,
@@ -157,13 +168,16 @@ namespace WinMigrationCleaner
                 var token = _cts.Token;
                 MetricDevices.Text = "…"; MetricServices.Text = "…"; MetricDrivers.Text = "…";
 
-                var devices = await Task.Run(Scanner.ScanPhantomDevices, token);
+                var devices = await Task.Run(Scanner.ScanAllDevices, token);
                 token.ThrowIfCancellationRequested();
                 ListDevices.ItemsSource = new ObservableCollection<PhantomDevice>(devices);
-                MetricDevices.Text = devices.Count.ToString();
-                MetricDevicesSub.Text = $"已加载到「幽灵设备」页";
-                DevicesSummary.Text = $"共 {devices.Count} 个幽灵设备记录。";
-                Log($"幽灵设备：{devices.Count} 个", "ok");
+                int ghostCount = devices.Count(d => d.IsGhost);
+                MetricDevices.Text = ghostCount.ToString();
+                MetricDevicesSub.Text = $"全部 {devices.Count} 项";
+                DevicesSummary.Text = $"共 {devices.Count} 项：本机所需 {devices.Count - ghostCount}，幽灵设备 {ghostCount}" +
+                    (ghostCount > 0 ? "（已默认勾选）" : "");
+                DevicesEmpty.Visibility = ghostCount == 0 ? Visibility.Visible : Visibility.Collapsed;
+                Log($"设备扫描完成：本机所需 {devices.Count - ghostCount}，幽灵设备 {ghostCount}", "ok");
 
                 var services = await Task.Run(Scanner.ScanSuspectServices, token);
                 token.ThrowIfCancellationRequested();
@@ -213,9 +227,9 @@ namespace WinMigrationCleaner
                         w.WriteLine($"{r.Label}:  {r.Value}");
                 w.WriteLine();
                 w.WriteLine();
-                w.WriteLine($"[幽灵设备] 共 {(ListDevices.ItemsSource as ObservableCollection<PhantomDevice>)?.Count ?? 0}");
+                w.WriteLine($"[设备清单] 共 {(ListDevices.ItemsSource as ObservableCollection<PhantomDevice>)?.Count ?? 0}");
                 if (ListDevices.ItemsSource is ObservableCollection<PhantomDevice> devs)
-                    foreach (var d in devs) w.WriteLine($"  - {d.Name} [{d.Class}]  {d.InstanceId}");
+                    foreach (var d in devs) w.WriteLine($"  - [{d.Status}] {d.Name} [{d.Class}]  {d.InstanceId}");
                 w.WriteLine();
                 w.WriteLine($"[可疑服务] 共 {(ListServices.ItemsSource as ObservableCollection<ServiceInfo>)?.Count ?? 0}");
                 if (ListServices.ItemsSource is ObservableCollection<ServiceInfo> svcs)
@@ -234,18 +248,29 @@ namespace WinMigrationCleaner
         }
 
         // ---------------- devices ----------------
+        void UpdateDeviceMetrics(List<PhantomDevice> devices)
+        {
+            int ghosts = devices.Count(d => d.IsGhost);
+            MetricDevices.Text = ghosts.ToString();
+            MetricDevicesSub.Text = $"全部 {devices.Count} 项";
+            DevicesSummary.Text = devices.Count == 0
+                ? "未发现任何设备记录。"
+                : $"共 {devices.Count} 项：本机所需 {devices.Count - ghosts}，幽灵设备 {ghosts}" +
+                  (ghosts > 0 ? "（已默认勾选，可直接移除）" : "");
+            DevicesEmpty.Visibility = devices.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
         async void BtnScanDevices_Click(object sender, RoutedEventArgs e)
         {
-            SetBusy(true, "扫描幽灵设备…");
-            Log("扫描幽灵设备…", "info");
+            SetBusy(true, "正在扫描全部设备…");
+            Log("扫描设备清单（本机所需 + 幽灵设备）…", "info");
             try
             {
-                var devices = await Task.Run(Scanner.ScanPhantomDevices);
+                var devices = await Task.Run(Scanner.ScanAllDevices);
                 ListDevices.ItemsSource = new ObservableCollection<PhantomDevice>(devices);
-                MetricDevices.Text = devices.Count.ToString();
-                MetricDevicesSub.Text = "已加载";
-                DevicesSummary.Text = $"共 {devices.Count} 个幽灵设备记录。";
-                Log($"幽灵设备：{devices.Count} 个", "ok");
+                UpdateDeviceMetrics(devices);
+                int ghosts = devices.Count(d => d.IsGhost);
+                Log($"设备扫描完成：本机所需 {devices.Count - ghosts}，幽灵设备 {ghosts}", "ok");
             }
             catch (Exception ex) { Log("扫描失败：" + ex.Message, "err"); }
             finally { SetBusy(false); }
@@ -254,17 +279,18 @@ namespace WinMigrationCleaner
         void BtnSelectAllDevices_Click(object sender, RoutedEventArgs e)
         {
             if (ListDevices.ItemsSource is not ObservableCollection<PhantomDevice> list) return;
-            bool any = list.Any(d => d.Selected);
-            foreach (var d in list) d.Selected = !any;
-            DevicesSummary.Text = any ? "已取消全选。" : "已全选。";
-            Status(any ? "已取消全选" : "已全选");
+            var ghosts = list.Where(d => d.IsGhost).ToList();
+            bool any = ghosts.Any(d => d.Selected);
+            foreach (var d in ghosts) d.Selected = !any;
+            DevicesSummary.Text = any ? "已取消全选（仅幽灵设备可勾选）。" : "已全选幽灵设备。";
+            Status(any ? "已取消全选" : "已全选幽灵设备");
         }
 
         async void BtnRemoveDevices_Click(object sender, RoutedEventArgs e)
         {
             if (!EnsureAdmin("移除幽灵设备")) return;
             if (ListDevices.ItemsSource is not ObservableCollection<PhantomDevice> list) return;
-            var selected = list.Where(d => d.Selected).ToList();
+            var selected = list.Where(d => d.Selected && d.IsGhost).ToList();
             if (selected.Count == 0)
             {
                 Log("未选中任何设备", "warn");
@@ -280,9 +306,10 @@ namespace WinMigrationCleaner
             if (!dlg.Confirmed) { Log("已取消移除设备", "info"); return; }
 
             _cts = new CancellationTokenSource();
-            SetBusy(true, "移除设备中…");
+            SetBusy(true, "移除设备中…", determinate: true);
+            MainProgress.Maximum = selected.Count;
             Log($"开始移除 {selected.Count} 个幽灵设备…", "info");
-            int ok = 0, fail = 0;
+            int ok = 0, fail = 0, done = 0;
             try
             {
                 var token = _cts.Token;
@@ -294,6 +321,7 @@ namespace WinMigrationCleaner
                         Dispatcher.Invoke(() => Status($"移除：{d.Name}"));
                         var (c, _) = Scanner.RunPnPUtil($"/remove-device \"{d.InstanceId}\"", 15000);
                         if (c == 0) Interlocked.Increment(ref ok); else Interlocked.Increment(ref fail);
+                        Dispatcher.Invoke(() => { done++; MainProgress.Value = done; });
                     }
                 }, token);
                 Log($"移除完成：成功 {ok}，失败 {fail}", fail == 0 ? "ok" : "warn");

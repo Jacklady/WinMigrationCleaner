@@ -7,7 +7,10 @@ namespace WinMigrationCleaner
         public string Name { get; set; } = "";
         public string Class { get; set; } = "";
         public string InstanceId { get; set; } = "";
-        public bool Selected { get; set; } = true;
+        public bool IsGhost { get; set; }
+        public string Status => IsGhost ? "幽灵设备" : "本机所需";
+        public bool CanSelect => IsGhost;
+        public bool Selected { get; set; }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         void Raise(string n) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
