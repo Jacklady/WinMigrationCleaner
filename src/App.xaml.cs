@@ -5,6 +5,8 @@ namespace WinMigrationCleaner
 {
     public partial class App : Application
     {
+        static bool _crashShown;
+
         protected override void OnStartup(StartupEventArgs e)
         {
             // pnputil / WMI output on Chinese Windows uses codepage 936 (GBK)
@@ -13,8 +15,13 @@ namespace WinMigrationCleaner
             DispatcherUnhandledException += (s, args) =>
             {
                 TryWriteCrash(args.Exception);
-                MessageBox.Show($"发生错误：{args.Exception.Message}", "WinMigrationCleaner",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                if (!_crashShown)
+                {
+                    _crashShown = true;
+                    MessageBox.Show($"发生错误：{args.Exception.Message}", "WinMigrationCleaner",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    _crashShown = false;
+                }
                 args.Handled = true;
             };
             AppDomain.CurrentDomain.UnhandledException += (s, args) =>
