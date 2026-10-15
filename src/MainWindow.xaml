@@ -3,35 +3,38 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="WinMigrationCleaner — 硬件迁移残留清理" Height="740" Width="1200"
         MinHeight="620" MinWidth="1000" WindowStartupLocation="CenterScreen"
-        Background="{StaticResource Brush.Bg}" FontFamily="Segoe UI, Microsoft YaHei UI">
+        Background="{DynamicResource Brush.Bg}" FontFamily="Segoe UI, Microsoft YaHei UI">
 
     <Window.Resources>
         <Style x:Key="PageTitle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="21"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
         <Style x:Key="Sub" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource Brush.SubText}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.SubText}"/>
             <Setter Property="FontSize" Value="12.5"/>
         </Style>
         <Style x:Key="MetricNum" TargetType="TextBlock">
             <Setter Property="FontSize" Value="30"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
             <Setter Property="FontWeight" Value="Bold"/>
         </Style>
         <Style x:Key="ChipLabel" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource Brush.SubText}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.SubText}"/>
             <Setter Property="FontSize" Value="11.5"/>
         </Style>
         <Style x:Key="ChipValue" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
         </Style>
         <Style x:Key="ColHeader" TargetType="GridViewColumnHeader">
-            <Setter Property="Background" Value="#12161F"/>
-            <Setter Property="Foreground" Value="{StaticResource Brush.SubText}"/>
+            <Setter Property="Background" Value="{DynamicResource Brush.Chip}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.SubText}"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Padding" Value="10,9"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="GridViewColumnHeader">
@@ -46,7 +49,7 @@
         <Style x:Key="ListViewBase" TargetType="ListView">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
             <Setter Property="FontSize" Value="12.5"/>
             <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
             <Setter Property="ItemContainerStyle">
@@ -63,10 +66,10 @@
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="bd" Property="Background" Value="{StaticResource Brush.CardHover}"/>
+                                            <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.CardHover}"/>
                                         </Trigger>
                                         <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                                            <Setter TargetName="bd" Property="Background" Value="#131824"/>
+                                            <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.RowAlt}"/>
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -85,7 +88,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- [Sidebar] -->
-        <Border Grid.Column="0" Background="{StaticResource Brush.Panel}" BorderBrush="{StaticResource Brush.Border}" BorderThickness="0,0,1,0">
+        <Border Grid.Column="0" Background="{DynamicResource Brush.Panel}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,1,0">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Top" Margin="20,26,16,6">
                     <StackPanel Orientation="Horizontal">
@@ -100,23 +103,25 @@
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="WinMigration" FontSize="13.5" FontWeight="SemiBold"/>
-                            <TextBlock Text="Cleaner" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource Brush.Accent}" Margin="0,-2,0,0"/>
+                            <TextBlock Text="WinMigration" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}"/>
+                            <TextBlock Text="Cleaner" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" Margin="0,-2,0,0"/>
                         </StackPanel>
                     </StackPanel>
-                    <TextBlock Text="硬件迁移残留清理" FontSize="11" Foreground="{StaticResource Brush.SubText}" Margin="2,12,0,0"/>
+                    <TextBlock Text="硬件迁移残留清理" FontSize="11" Foreground="{DynamicResource Brush.SubText}" Margin="2,12,0,0"/>
                 </StackPanel>
 
                 <StackPanel DockPanel.Dock="Bottom" Margin="14,8,14,16">
-                    <Border Background="{StaticResource Brush.Card}" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" CornerRadius="11" Padding="12,11">
+                    <Border Background="{DynamicResource Brush.Card}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="11" Padding="12,11">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
-                                <Ellipse x:Name="AdminDot" Width="8" Height="8" Fill="{StaticResource Brush.Warn}" VerticalAlignment="Center"/>
+                                <Ellipse x:Name="AdminDot" Width="8" Height="8" Fill="{DynamicResource Brush.Warn}" VerticalAlignment="Center"/>
                                 <TextBlock x:Name="AdminText" Text="未提权：可扫描，清理需提权" FontSize="10.8"
-                                           Foreground="{StaticResource Brush.SubText}" Margin="8,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                           Foreground="{DynamicResource Brush.SubText}" Margin="8,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
                             </StackPanel>
                             <Button x:Name="BtnElevate" Style="{StaticResource BtnGhost}" Content="以管理员身份重启" FontSize="12"
                                     Margin="0,10,0,0" Padding="8,6" Click="BtnElevate_Click"/>
+                            <Button x:Name="BtnToggleTheme" Style="{StaticResource BtnGhost}" Content="切换浅色主题" FontSize="12"
+                                    Margin="0,8,0,0" Padding="8,6" Click="BtnToggleTheme_Click"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -162,8 +167,8 @@
                     <UniformGrid Columns="3" Margin="0,22,0,0">
                         <Border Style="{StaticResource CardBorder}" Margin="0,0,14,0" Padding="18,16">
                             <StackPanel Orientation="Horizontal">
-                                <Border Style="{StaticResource MetricIcon}" Background="{StaticResource Brush.AccentSoft}">
-                                    <Ellipse Width="10" Height="10" Fill="{StaticResource Brush.Accent}"/>
+                                <Border Style="{StaticResource MetricIcon}" Background="{DynamicResource Brush.AccentSoft}">
+                                    <Ellipse Width="10" Height="10" Fill="{DynamicResource Brush.Accent}"/>
                                 </Border>
                                 <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal">
@@ -176,8 +181,8 @@
                         </Border>
                         <Border Style="{StaticResource CardBorder}" Margin="0,0,14,0" Padding="18,16">
                             <StackPanel Orientation="Horizontal">
-                                <Border Style="{StaticResource MetricIcon}" Background="{StaticResource Brush.WarnSoft}">
-                                    <Ellipse Width="10" Height="10" Fill="{StaticResource Brush.Warn}"/>
+                                <Border Style="{StaticResource MetricIcon}" Background="{DynamicResource Brush.WarnSoft}">
+                                    <Ellipse Width="10" Height="10" Fill="{DynamicResource Brush.Warn}"/>
                                 </Border>
                                 <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal">
@@ -190,8 +195,8 @@
                         </Border>
                         <Border Style="{StaticResource CardBorder}" Padding="18,16">
                             <StackPanel Orientation="Horizontal">
-                                <Border Style="{StaticResource MetricIcon}" Background="{StaticResource Brush.GreenSoft}">
-                                    <Ellipse Width="10" Height="10" Fill="{StaticResource Brush.Green}"/>
+                                <Border Style="{StaticResource MetricIcon}" Background="{DynamicResource Brush.GreenSoft}">
+                                    <Ellipse Width="10" Height="10" Fill="{DynamicResource Brush.Green}"/>
                                 </Border>
                                 <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal">
@@ -209,28 +214,28 @@
                         <StackPanel>
                             <TextBlock Style="{StaticResource Sub}" Text="本机硬件"/>
                             <WrapPanel Margin="0,12,0,2">
-                                <Border Background="#121826" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1"
+                                <Border Background="{DynamicResource Brush.Chip}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
                                         CornerRadius="9" Padding="13,8" Margin="0,0,10,8" MaxWidth="330">
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource ChipLabel}" Text="处理器"/>
                                         <TextBlock x:Name="InfoCpu" Style="{StaticResource ChipValue}" Text="—" Margin="0,2,0,0"/>
                                     </StackPanel>
                                 </Border>
-                                <Border Background="#121826" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1"
+                                <Border Background="{DynamicResource Brush.Chip}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
                                         CornerRadius="9" Padding="13,8" Margin="0,0,10,8" MaxWidth="330">
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource ChipLabel}" Text="显卡"/>
                                         <TextBlock x:Name="InfoGpu" Style="{StaticResource ChipValue}" Text="—" Margin="0,2,0,0"/>
                                     </StackPanel>
                                 </Border>
-                                <Border Background="#121826" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1"
+                                <Border Background="{DynamicResource Brush.Chip}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
                                         CornerRadius="9" Padding="13,8" Margin="0,0,10,8" MaxWidth="330">
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource ChipLabel}" Text="主板"/>
                                         <TextBlock x:Name="InfoBoard" Style="{StaticResource ChipValue}" Text="—" Margin="0,2,0,0"/>
                                     </StackPanel>
                                 </Border>
-                                <Border Background="#121826" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1"
+                                <Border Background="{DynamicResource Brush.Chip}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
                                         CornerRadius="9" Padding="13,8" Margin="0,0,10,8">
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource ChipLabel}" Text="内存"/>
@@ -386,14 +391,14 @@
             <ScrollViewer x:Name="PageAbout" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
                 <StackPanel MaxWidth="780" HorizontalAlignment="Left">
                     <TextBlock Style="{StaticResource PageTitle}" Text="关于 WinMigrationCleaner"/>
-                    <TextBlock Foreground="#B9C2D4" FontSize="13" TextWrapping="Wrap" LineHeight="22" Margin="0,16,0,0"
+                    <TextBlock Foreground="{DynamicResource Brush.BodyText}" FontSize="13" TextWrapping="Wrap" LineHeight="22" Margin="0,16,0,0"
                                Text="当你把 Windows 系统从一台电脑迁移到另一台（换主板、换机装老系统、笔记本换台式机），旧硬件会在系统里留下三类残留：幽灵设备记录、厂商驱动服务和 DriverStore 驱动包。本工具把这三类残留的检测与清理整合到一起，并内置多层安全保护：自动保留当前平台的核心驱动套件，识别属于已安装软件的驱动包，并默认以「只报告」方式呈现可清理项，所有删除操作均需显式确认。"/>
-                    <TextBlock Foreground="#B9C2D4" FontSize="13" TextWrapping="Wrap" LineHeight="22" Margin="0,12,0,0"
+                    <TextBlock Foreground="{DynamicResource Brush.BodyText}" FontSize="13" TextWrapping="Wrap" LineHeight="22" Margin="0,12,0,0"
                                Text="本项目使用 Windows 内置的 WMI 与 pnputil，不含任何第三方二进制。所有破坏性操作均写入活动日志。"/>
                     <Border Style="{StaticResource CardBorder}" Margin="0,22,0,0">
                         <StackPanel>
-                            <TextBlock FontWeight="SemiBold" Text="安全边界"/>
-                            <TextBlock Foreground="{StaticResource Brush.SubText}" FontSize="12" LineHeight="21" TextWrapping="Wrap" Margin="0,10,0,0"
+                            <TextBlock FontWeight="SemiBold" Text="安全边界" Foreground="{DynamicResource Brush.Text}"/>
+                            <TextBlock Foreground="{DynamicResource Brush.SubText}" FontSize="12" LineHeight="21" TextWrapping="Wrap" Margin="0,10,0,0"
                                        Text="• 幽灵设备：仅移除 Present=false 的记录，重新插入硬件会自动重装&#10;• 驱动包：仅允许删除标记为「可清理」的项，删除前二次确认&#10;• 服务：仅显示命中厂商关键字的候选，删除前单独确认&#10;• 建议操作前创建系统还原点；删除后重启一次让变更完全生效"/>
                         </StackPanel>
                     </Border>
@@ -424,16 +429,16 @@
                                         <ColumnDefinition Width="66"/>
                                         <ColumnDefinition/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="{Binding Time, Mode=OneWay}" FontSize="11.5" Foreground="#57607A"
+                                    <TextBlock Text="{Binding Time, Mode=OneWay}" FontSize="11.5" Foreground="{DynamicResource Brush.LogTime}"
                                                FontFamily="Consolas, Microsoft YaHei UI" VerticalAlignment="Top"/>
                                     <TextBlock Grid.Column="1" Text="{Binding Message, Mode=OneWay}" FontSize="12" TextWrapping="Wrap">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
-                                                <Setter Property="Foreground" Value="#B9C2D4"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource Brush.LogText}"/>
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Kind}" Value="ok"><Setter Property="Foreground" Value="{StaticResource Brush.Green}"/></DataTrigger>
-                                                    <DataTrigger Binding="{Binding Kind}" Value="warn"><Setter Property="Foreground" Value="{StaticResource Brush.Warn}"/></DataTrigger>
-                                                    <DataTrigger Binding="{Binding Kind}" Value="err"><Setter Property="Foreground" Value="{StaticResource Brush.Danger}"/></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Kind}" Value="ok"><Setter Property="Foreground" Value="{DynamicResource Brush.Green}"/></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Kind}" Value="warn"><Setter Property="Foreground" Value="{DynamicResource Brush.Warn}"/></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Kind}" Value="err"><Setter Property="Foreground" Value="{DynamicResource Brush.Danger}"/></DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </TextBlock.Style>

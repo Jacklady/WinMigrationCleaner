@@ -24,10 +24,8 @@ namespace WinMigrationCleaner
         // ---------------- init & layout ----------------
         void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            _isAdmin = Scanner.IsAdmin();
-            AdminDot.Fill = _isAdmin ? (Brush)FindResource("Brush.Green") : (Brush)FindResource("Brush.Warn");
-            AdminText.Text = _isAdmin ? "已提权：全部功能可用" : "未提权：可扫描，清理需提权";
-            BtnElevate.Visibility = _isAdmin ? Visibility.Collapsed : Visibility.Visible;
+            ApplyAdminUi();
+            BtnToggleTheme.Content = App.CurrentTheme == "light" ? "切换深色主题" : "切换浅色主题";
 
             Log("欢迎使用 WinMigrationCleaner", "ok");
             Log(_isAdmin ? "已以管理员身份运行" : "提示：清理操作需要管理员权限（右下角可一键提权重启）", "info");
@@ -91,6 +89,24 @@ namespace WinMigrationCleaner
             MessageBox.Show(this, $"「{operation}」需要管理员权限。\n\n请先点击左下角「以管理员身份重启」。",
                 "需要提权", MessageBoxButton.OK, MessageBoxImage.Warning);
             return false;
+        }
+
+        void ApplyAdminUi()
+        {
+            _isAdmin = Scanner.IsAdmin();
+            AdminDot.Fill = _isAdmin ? (Brush)FindResource("Brush.Green") : (Brush)FindResource("Brush.Warn");
+            AdminText.Text = _isAdmin ? "已提权：全部功能可用" : "未提权：可扫描，清理需提权";
+            BtnElevate.Visibility = _isAdmin ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        void BtnToggleTheme_Click(object sender, RoutedEventArgs e)
+        {
+            string next = App.CurrentTheme == "dark" ? "light" : "dark";
+            App.ApplyTheme(next);
+            BtnToggleTheme.Content = next == "light" ? "切换深色主题" : "切换浅色主题";
+            ApplyAdminUi();
+            Log($"已切换到{(next == "light" ? "浅色" : "深色")}主题（记忆偏好，下次启动生效）", "ok");
+            Status(next == "light" ? "浅色主题" : "深色主题");
         }
 
         void BtnElevate_Click(object sender, RoutedEventArgs e)
