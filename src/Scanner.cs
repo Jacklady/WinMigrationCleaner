@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.IO;
 using System.Management;
 using System.ServiceProcess;
@@ -30,6 +31,15 @@ namespace WinMigrationCleaner
             "hwusb", "fusbhub", "rt-usb", "rt6", "rt2", "rdrv", "vmm", "acpivpc"
         };
 
+        public static readonly string[] VirtualGpuKeywords =
+        {
+            "virtual", "idd", "oray", "mumu", "todesk", "gameviewer", "pico",
+            "sangfor", "parsec", "splashtop", "teamviewer", "sunlogin"
+        };
+
+        public static bool IsVirtualGpu(string name) =>
+            VirtualGpuKeywords.Any(k => name.Contains(k, StringComparison.OrdinalIgnoreCase));
+
         // Driver packages of the CURRENT platform's core devices. Never suggest removal.
         public static readonly string[] KeepPackages =
         {
@@ -50,45 +60,220 @@ namespace WinMigrationCleaner
             Process.Start(new ProcessStartInfo(exe) { Verb = "runas", UseShellExecute = true });
         }
 
-        // ---------------- System summary ----------------
-        public static SystemSummary GetSystemSummary()
+        [DllImport("user32.dll")]
+        private static extern bool EnumDisplaySettings(string? deviceName, int modeNum, ref DEVMODE devMode);
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        private struct DEVMODE
         {
-            var s = new SystemSummary();
-            try
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string dmDeviceName;
+            public ushort dmSpecVersion, dmDriverVersion, dmSize, dmDriverExtra;
+            public uint dmFields;
+            public int dmPositionX, dmPositionY;
+            public uint dmDisplayOrientation, dmDisplayFixedOutput;
+            public short dmColor, dmDuplex, dmYResolution, dmTTOption, dmCollate;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string dmFormName;
+            public ushort dmLogPixels;
+            public uint dmBitsPerPel, dmPelsWidth, dmPelsHeight, dmNup, dmDisplayFlags, dmDisplayFrequency;
+            public uint dmICMMethod, dmICMIntent, dmMediaType, dmDitherType, dmReserved1, dmReserved2, dmPanningWidth, dmPanningHeight;
+        }
+
+        // ---------------- Hardware info ----------------
+        public static List<HardwareRow> GetHardwareInfo()
+        {
+            var rows = new List<HardwareRow>();
+            static object? GetProp(ManagementBaseObject o, string name)
             {
-                using var cpu = new ManagementObjectSearcher("SELECT Name FROM Win32_Processor").Get();
-                foreach (var o in cpu) { s.Cpu = o["Name"]?.ToString() ?? "—"; break; }
+                try { return o[name]; } catch { return null; }
             }
-            catch { }
-            try
+            void Diag(string where, Exception ex)
             {
-                using var gpu = new ManagementObjectSearcher("SELECT Name FROM Win32_VideoController").Get();
-                var names = gpu.OfType<ManagementObject>()
-                    .Select(o => o["Name"]?.ToString())
-                    .Where(n => n != null && !n.Contains("Virtual", StringComparison.OrdinalIgnoreCase))
-                    .Take(2);
-                s.Gpu = string.Join(" + ", names);
+                try { File.AppendAllText(Path.Combine(Path.GetTempPath(), "wmc_hw_diag.txt"),
+                    $"{DateTime.Now:HH:mm:ss} [{where}] {ex}\r\n"); } catch { }
             }
-            catch { }
+
+            // 操作系统
             try
             {
-                using var bd = new ManagementObjectSearcher("SELECT Manufacturer, Product FROM Win32_BaseBoard").Get();
-                foreach (var o in bd)
+                using var os = new ManagementObjectSearcher("SELECT Caption, BuildNumber FROM Win32_OperatingSystem").Get();
+                foreach (var o in os)
                 {
-                    s.Board = $"{o["Manufacturer"]} {o["Product"]}";
+                    string cap = GetProp(o, "Caption")?.ToString() ?? "";
+                    string build = GetProp(o, "BuildNumber")?.ToString() ?? "";
+                    string disp = "";
+                    using var k = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
+                    disp = k?.GetValue("DisplayVersion")?.ToString() ?? "";
+                    rows.Add(new HardwareRow { Label = "系统", Value = $"{cap} · 版本 {disp} · 内部版本 {build}" });
                     break;
                 }
             }
             catch { }
+
+            // 处理器
             try
             {
-                using var ram = new ManagementObjectSearcher("SELECT Capacity FROM Win32_PhysicalMemory").Get();
-                long total = ram.OfType<ManagementObject>()
-                    .Sum(o => Convert.ToInt64(o["Capacity"] ?? 0L));
-                if (total > 0) s.Ram = $"{total / 1024 / 1024 / 1024.0:0.#} GB";
+                using var cpu = new ManagementObjectSearcher(
+                    "SELECT Name, NumberOfCores, NumberOfLogicalProcessors, CurrentClockSpeed FROM Win32_Processor").Get();
+                foreach (var o in cpu)
+                {
+                    string name = (GetProp(o, "Name")?.ToString() ?? "").Trim();
+                    int cores = Convert.ToInt32(GetProp(o, "NumberOfCores") ?? 0);
+                    int threads = Convert.ToInt32(GetProp(o, "NumberOfLogicalProcessors") ?? 0);
+                    int cur = Convert.ToInt32(GetProp(o, "CurrentClockSpeed") ?? 0);
+                    rows.Add(new HardwareRow { Label = "处理器", Value = $"{name} · {cores} 核 {threads} 线程 · 当前频率 {cur} MHz" });
+                    break;
+                }
             }
             catch { }
-            return s;
+
+            // 主板 + BIOS
+            try
+            {
+                string board = "";
+                using var bd = new ManagementObjectSearcher("SELECT Manufacturer, Product FROM Win32_BaseBoard").Get();
+                foreach (var o in bd)
+                {
+                    board = $"{GetProp(o, "Product")} ({GetProp(o, "Manufacturer")})";
+                    break;
+                }
+                string bios = "";
+                using var bi = new ManagementObjectSearcher("SELECT SMBIOSBIOSVersion, ReleaseDate FROM Win32_BIOS").Get();
+                foreach (var o in bi)
+                {
+                    string ver = GetProp(o, "SMBIOSBIOSVersion")?.ToString() ?? "";
+                    string date = "";
+                    try
+                    {
+                        var d = ManagementDateTimeConverter.ToDateTime(GetProp(o, "ReleaseDate")?.ToString() ?? "");
+                        date = d.ToString("yyyy-MM-dd");
+                    }
+                    catch { }
+                    bios = $"BIOS {ver}" + (date != "" ? $" ({date})" : "");
+                    break;
+                }
+                rows.Add(new HardwareRow { Label = "主板", Value = $"{board} · {bios}" });
+            }
+            catch { }
+
+            // 显卡（过滤虚拟显示适配器）+ 显存
+            try
+            {
+                var vramByNames = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+                try
+                {
+                    using var cls = Registry.LocalMachine.OpenSubKey(
+                        @"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}");
+                    if (cls != null)
+                    {
+                        foreach (var sub in cls.GetSubKeyNames())
+                        {
+                            using var sk = cls.OpenSubKey(sub);
+                            string desc = sk?.GetValue("DriverDesc")?.ToString() ?? "";
+                            if (desc == "") continue;
+                            object? q = sk?.GetValue("qwMemorySize");
+                            if (q is long l) vramByNames[desc] = l;
+                            else if (q is int i && i > 0) vramByNames[desc] = i;
+                        }
+                    }
+                }
+                catch { }
+
+                var gpus = new List<string>();
+                using var gpu = new ManagementObjectSearcher("SELECT Name, AdapterRAM FROM Win32_VideoController").Get();
+                foreach (var o in gpu)
+                {
+                    string name = GetProp(o, "Name")?.ToString() ?? "";
+                    if (IsVirtualGpu(name)) continue;
+                    string vram = "";
+                    if (vramByNames.TryGetValue(name, out long bytes) && bytes > 0)
+                        vram = $" · 显存 {bytes / 1024 / 1024 / 1024.0:0.#} GB";
+                    gpus.Add(name + vram);
+                }
+                if (gpus.Count > 0)
+                    rows.Add(new HardwareRow { Label = "显卡", Value = string.Join("  +  ", gpus) });
+            }
+            catch { }
+
+            // 内存
+            try
+            {
+                using var ram = new ManagementObjectSearcher(
+                    "SELECT Manufacturer, Capacity, ConfiguredClockSpeed, SMBIOSMemoryType FROM Win32_PhysicalMemory").Get();
+                long total = 0;
+                var details = new List<string>();
+                foreach (var o in ram)
+                {
+                    long cap = Convert.ToInt64(GetProp(o, "Capacity") ?? 0L);
+                    total += cap;
+                    string mfr = (GetProp(o, "Manufacturer")?.ToString() ?? "").Trim();
+                    int mhz = Convert.ToInt32(GetProp(o, "ConfiguredClockSpeed") ?? 0);
+                    int smType = Convert.ToInt32(GetProp(o, "SMBIOSMemoryType") ?? 0);
+                    string type = smType == 34 ? "DDR5" : smType == 26 ? "DDR4" : "";
+                    details.Add($"{mfr} {cap / 1024 / 1024 / 1024.0:0.#}GB" + (type != "" ? $" {type}" : "") + (mhz > 0 ? $" {mhz}MHz" : ""));
+                }
+                if (total > 0)
+                    rows.Add(new HardwareRow { Label = "内存", Value = $"共 {total / 1024 / 1024 / 1024.0:0.#} GB · {string.Join(" + ", details)}" });
+            }
+            catch { }
+
+            // 硬盘
+            try
+            {
+                using var dd = new ManagementObjectSearcher("SELECT Model, Size FROM Win32_DiskDrive").Get();
+                var disks = dd.OfType<ManagementObject>()
+                    .Select(o => $"{GetProp(o, "Model")} ({Convert.ToInt64(GetProp(o, "Size") ?? 0L) / 1024 / 1024 / 1024.0:0} GB)")
+                    .ToList();
+                if (disks.Count > 0)
+                    rows.Add(new HardwareRow { Label = "硬盘", Value = string.Join("  +  ", disks) });
+            }
+            catch { }
+
+            // 显示器
+            try
+            {
+                Action<string> D2 = m => { try { File.AppendAllText(Path.Combine(Path.GetTempPath(), "wmc_hw_diag.txt"), DateTime.Now.ToString("HH:mm:ss ") + m + "\r\n"); } catch { } };
+                string monName = "";
+                using var mon = new ManagementObjectSearcher(@"root\wmi", "SELECT UserFriendlyName, Active FROM WmiMonitorID").Get();
+                foreach (var o in mon)
+                {
+                    if (!Equals(GetProp(o, "Active"), true)) continue;
+                    var ids = GetProp(o, "UserFriendlyName") as ushort[];
+                    if (ids == null) continue;
+                    string n = new string(ids.TakeWhile(c => c != 0).Select(c => (char)c).ToArray()).Trim();
+                    if (n != "") { monName = n; break; }
+                }
+                string mode = "";
+                using var vc = new ManagementObjectSearcher(
+                    "SELECT VideoModeDescription, CurrentRefreshRate FROM Win32_VideoController").Get();
+                foreach (var o in vc)
+                {
+                    string gname = GetProp(o, "Name")?.ToString() ?? "";
+                    if (IsVirtualGpu(gname)) continue;
+                    string vm = GetProp(o, "VideoModeDescription")?.ToString() ?? "";
+                    var m = Regex.Match(vm, @"(\d+)\s*x\s*(\d+)");
+                    if (!m.Success) continue;
+                    int hz = Convert.ToInt32(GetProp(o, "CurrentRefreshRate") ?? 0);
+                    mode = $"{m.Groups[1].Value}×{m.Groups[2].Value}" + (hz > 0 ? $" @ {hz}Hz" : "");
+                    break;
+                }
+                if (mode == "")
+                {
+                    try
+                    {
+                        var dm = new DEVMODE();
+                        dm.dmSize = (ushort)Marshal.SizeOf<DEVMODE>();
+                        if (EnumDisplaySettings(null, -1, ref dm) && dm.dmPelsWidth > 0)
+                            mode = $"{dm.dmPelsWidth}×{dm.dmPelsHeight}" +
+                                   (dm.dmDisplayFrequency > 1 ? $" @ {dm.dmDisplayFrequency}Hz" : "");
+                    }
+                    catch { }
+                }
+                if (monName != "" || mode != "")
+                    rows.Add(new HardwareRow { Label = "显示器", Value = $"{monName} · {mode}".Trim(' ', '·') });
+            }
+            catch (Exception ex) { Diag("monitor", ex); }
+
+            return rows;
         }
 
         // ---------------- Phantom devices ----------------

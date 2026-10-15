@@ -5,6 +5,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace WinMigrationCleaner
 {
@@ -30,13 +31,34 @@ namespace WinMigrationCleaner
             Log("欢迎使用 WinMigrationCleaner", "ok");
             Log(_isAdmin ? "已以管理员身份运行" : "提示：清理操作需要管理员权限（右下角可一键提权重启）", "info");
 
-            // system info (fast, sync ok)
-            var s = Scanner.GetSystemSummary();
-            InfoCpu.Text = s.Cpu;
-            InfoGpu.Text = s.Gpu;
-            InfoBoard.Text = s.Board;
-            InfoRam.Text = s.Ram;
+            // hardware info (fast, sync ok)
+            _hwRows = Scanner.GetHardwareInfo();
+            InfoList.ItemsSource = _hwRows;
+
+            // diagnostic self-screenshot mode
+            if (App.AutoScreenshot != null)
+            {
+                var path = App.AutoScreenshot;
+                Dispatcher.BeginInvoke(new Action(async () =>
+                {
+                    try
+                    {
+                        await Task.Delay(400);
+                        var rtb = new RenderTargetBitmap(
+                            (int)ActualWidth, (int)ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                        rtb.Render(this);
+                        var enc = new PngBitmapEncoder();
+                        enc.Frames.Add(BitmapFrame.Create(rtb));
+                        using var fs = File.Create(path);
+                        enc.Save(fs);
+                    }
+                    catch { }
+                    finally { Application.Current.Shutdown(); }
+                }), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            }
         }
+
+        List<HardwareRow>? _hwRows;
 
         void Nav_Click(object sender, RoutedEventArgs e)
         {
@@ -186,8 +208,10 @@ namespace WinMigrationCleaner
                 using var w = new StreamWriter(file);
                 w.WriteLine($"WinMigrationCleaner 扫描报告  {DateTime.Now}");
                 w.WriteLine(new string('=', 60));
-                w.WriteLine($"处理器: {InfoCpu.Text}   显卡: {InfoGpu.Text}");
-                w.WriteLine($"主板:   {InfoBoard.Text}   内存: {InfoRam.Text}");
+                if (_hwRows != null)
+                    foreach (var r in _hwRows)
+                        w.WriteLine($"{r.Label}:  {r.Value}");
+                w.WriteLine();
                 w.WriteLine();
                 w.WriteLine($"[幽灵设备] 共 {(ListDevices.ItemsSource as ObservableCollection<PhantomDevice>)?.Count ?? 0}");
                 if (ListDevices.ItemsSource is ObservableCollection<PhantomDevice> devs)
