@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>WinMigrationCleaner</AssemblyName>
+    <RootNamespace>WinMigrationCleaner</RootNamespace>
+    <Version>1.0.0</Version>
+    <Authors>WinMigrationCleaner Contributors</Authors>
+    <Product>WinMigrationCleaner</Product>
+    <Description>Windows hardware migration leftover cleaner - ghost devices, junk services and stale driver packages</Description>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Management" Version="9.0.0" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>

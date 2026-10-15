@@ -1,0 +1,8 @@
+bin/
+obj/
+dist/
+publish/
+*.user
+.vs/
+ui_test*.png
+ui_final.png
