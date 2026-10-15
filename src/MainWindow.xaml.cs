@@ -51,6 +51,22 @@ namespace WinMigrationCleaner
                             UpdateDeviceMetrics(devices);
                             Nav_Click(NavDevices, null);
                         }
+                        else
+                        {
+                            // dashboard: run real scans so metrics show actual values
+                            var devices = await Task.Run(Scanner.ScanAllDevices);
+                            ListDevices.ItemsSource = new ObservableCollection<PhantomDevice>(devices);
+                            UpdateDeviceMetrics(devices);
+                            var services = await Task.Run(Scanner.ScanSuspectServices);
+                            ListServices.ItemsSource = new ObservableCollection<ServiceInfo>(services);
+                            MetricServices.Text = services.Count.ToString();
+                            MetricServicesSub.Text = "命中厂商关键字的服务候选";
+                            var drivers = await Task.Run(Scanner.ScanUnusedDriverPackages);
+                            ListDrivers.ItemsSource = new ObservableCollection<DriverPackage>(drivers);
+                            int cleanable = drivers.Count(d => d.Risk == "可清理");
+                            MetricDrivers.Text = drivers.Count.ToString();
+                            MetricDriversSub.Text = $"其中 {cleanable} 个可安全删除";
+                        }
                         await Task.Delay(400);
                         var rtb = new RenderTargetBitmap(
                             (int)ActualWidth, (int)ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
@@ -173,7 +189,7 @@ namespace WinMigrationCleaner
                 ListDevices.ItemsSource = new ObservableCollection<PhantomDevice>(devices);
                 int ghostCount = devices.Count(d => d.IsGhost);
                 MetricDevices.Text = ghostCount.ToString();
-                MetricDevicesSub.Text = $"全部 {devices.Count} 项";
+                MetricDevicesSub.Text = $"本机所需 {devices.Count - ghostCount} 项（已保护）";
                 DevicesSummary.Text = $"共 {devices.Count} 项：本机所需 {devices.Count - ghostCount}，幽灵设备 {ghostCount}" +
                     (ghostCount > 0 ? "（已默认勾选）" : "");
                 DevicesEmpty.Visibility = ghostCount == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -183,7 +199,7 @@ namespace WinMigrationCleaner
                 token.ThrowIfCancellationRequested();
                 ListServices.ItemsSource = new ObservableCollection<ServiceInfo>(services);
                 MetricServices.Text = services.Count.ToString();
-                MetricServicesSub.Text = "已加载到「系统服务」页";
+                MetricServicesSub.Text = "命中厂商关键字的服务候选";
                 ServicesSummary.Text = $"共 {services.Count} 个可疑服务候选。";
                 Log($"可疑服务：{services.Count} 个", "ok");
 
@@ -192,7 +208,7 @@ namespace WinMigrationCleaner
                 ListDrivers.ItemsSource = new ObservableCollection<DriverPackage>(drivers);
                 int cleanable = drivers.Count(d => d.Risk == "可清理");
                 MetricDrivers.Text = drivers.Count.ToString();
-                MetricDriversSub.Text = $"其中 {cleanable} 个可清理";
+                MetricDriversSub.Text = $"其中 {cleanable} 个可安全删除";
                 DriversSummary.Text = $"共 {drivers.Count} 个未使用包，{cleanable} 个可清理（软件自带已标记为「软件」）。";
                 Log($"未使用驱动包：{drivers.Count} 个（可清理 {cleanable}）", "ok");
 
@@ -252,7 +268,7 @@ namespace WinMigrationCleaner
         {
             int ghosts = devices.Count(d => d.IsGhost);
             MetricDevices.Text = ghosts.ToString();
-            MetricDevicesSub.Text = $"全部 {devices.Count} 项";
+            MetricDevicesSub.Text = $"本机所需 {devices.Count - ghosts} 项（已保护）";
             DevicesSummary.Text = devices.Count == 0
                 ? "未发现任何设备记录。"
                 : $"共 {devices.Count} 项：本机所需 {devices.Count - ghosts}，幽灵设备 {ghosts}" +
@@ -345,7 +361,7 @@ namespace WinMigrationCleaner
                 var services = await Task.Run(Scanner.ScanSuspectServices);
                 ListServices.ItemsSource = new ObservableCollection<ServiceInfo>(services);
                 MetricServices.Text = services.Count.ToString();
-                MetricServicesSub.Text = "已加载";
+                MetricServicesSub.Text = "命中厂商关键字的服务候选";
                 ServicesSummary.Text = $"共 {services.Count} 个可疑服务候选。";
                 Log($"可疑服务：{services.Count} 个", "ok");
             }
@@ -424,7 +440,7 @@ namespace WinMigrationCleaner
                 ListDrivers.ItemsSource = new ObservableCollection<DriverPackage>(drivers);
                 int cleanable = drivers.Count(d => d.Risk == "可清理");
                 MetricDrivers.Text = drivers.Count.ToString();
-                MetricDriversSub.Text = $"其中 {cleanable} 个可清理";
+                MetricDriversSub.Text = $"其中 {cleanable} 个可安全删除";
                 DriversSummary.Text = $"共 {drivers.Count} 个未使用包，{cleanable} 个可清理。";
                 Log($"未使用驱动包：{drivers.Count} 个（可清理 {cleanable}）", "ok");
             }

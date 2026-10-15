@@ -172,11 +172,12 @@
                                     <Ellipse Width="10" Height="10" Fill="{DynamicResource Brush.Accent}"/>
                                 </Border>
                                 <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="幽灵设备残留（可清理）" FontSize="12.5" Foreground="{DynamicResource Brush.SubText}"/>
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock x:Name="MetricDevices" Style="{StaticResource MetricNum}" Text="—"/>
                                         <TextBlock Style="{StaticResource Sub}" Text=" 项" VerticalAlignment="Bottom" Margin="0,0,0,7"/>
                                     </StackPanel>
-                                    <TextBlock x:Name="MetricDevicesSub" Style="{StaticResource Sub}" Text="幽灵设备 · 未扫描"/>
+                                    <TextBlock x:Name="MetricDevicesSub" Style="{StaticResource Sub}" Text="未扫描"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -186,11 +187,12 @@
                                     <Ellipse Width="10" Height="10" Fill="{DynamicResource Brush.Warn}"/>
                                 </Border>
                                 <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="旧厂商残留服务" FontSize="12.5" Foreground="{DynamicResource Brush.SubText}"/>
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock x:Name="MetricServices" Style="{StaticResource MetricNum}" Text="—"/>
                                         <TextBlock Style="{StaticResource Sub}" Text=" 项" VerticalAlignment="Bottom" Margin="0,0,0,7"/>
                                     </StackPanel>
-                                    <TextBlock x:Name="MetricServicesSub" Style="{StaticResource Sub}" Text="可疑服务 · 未扫描"/>
+                                    <TextBlock x:Name="MetricServicesSub" Style="{StaticResource Sub}" Text="未扫描"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -200,11 +202,12 @@
                                     <Ellipse Width="10" Height="10" Fill="{DynamicResource Brush.Green}"/>
                                 </Border>
                                 <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="过期驱动包（DriverStore）" FontSize="12.5" Foreground="{DynamicResource Brush.SubText}"/>
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock x:Name="MetricDrivers" Style="{StaticResource MetricNum}" Text="—"/>
                                         <TextBlock Style="{StaticResource Sub}" Text=" 项" VerticalAlignment="Bottom" Margin="0,0,0,7"/>
                                     </StackPanel>
-                                    <TextBlock x:Name="MetricDriversSub" Style="{StaticResource Sub}" Text="未使用驱动包 · 未扫描"/>
+                                    <TextBlock x:Name="MetricDriversSub" Style="{StaticResource Sub}" Text="未扫描"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
