@@ -435,8 +435,14 @@ namespace WinMigrationCleaner
                 if (drv.Count > 0 && !_cts.Token.IsCancellationRequested)
                 {
                     Log($"开始删除 {drv.Count} 个可清理驱动包…", "info");
-                    (drvOk, drvFail, var drvErrors) = await DeleteDriversCoreAsync(drv, _cts.Token);
+                    (drvOk, drvFail, var drvErrors, var occupied) = await DeleteDriversCoreAsync(drv, _cts.Token);
                     allErrors.AddRange(drvErrors);
+                    if (occupied.Count > 0)
+                    {
+                        Log($"检测到 {occupied.Count} 个驱动包被打印后台占用，尝试停用服务后删除…", "warn");
+                        var (rok, _) = await RetryOccupiedWithSpoolerAsync(occupied, _cts.Token);
+                        drvOk += rok; drvFail = Math.Max(0, drvFail - rok);
+                    }
                 }
                 Log($"一键清理完成：设备 成功 {devOk}/失败 {devFail}，驱动包 成功 {drvOk}/失败 {drvFail}（结果已刷新）",
                     devFail + drvFail == 0 ? "ok" : "warn");
@@ -873,9 +879,16 @@ namespace WinMigrationCleaner
             int ok = 0, fail = 0;
             try
             {
-                (ok, fail, var errors) = await DeleteDriversCoreAsync(selected, _cts.Token);
-                Log($"驱动包删除完成：成功 {ok}，失败 {fail}（结果已刷新）", fail == 0 ? "ok" : "warn");
+                (ok, fail, var errors, var occupied) = await DeleteDriversCoreAsync(selected, _cts.Token);
+                Log($"驱动包删除完成：成功 {ok}，失败 {fail}", fail == 0 ? "ok" : "warn");
                 LogErrors(errors);
+                if (occupied.Count > 0)
+                {
+                    Log($"检测到 {occupied.Count} 个驱动包被打印后台占用，尝试停用服务后删除…", "warn");
+                    var (rok, _) = await RetryOccupiedWithSpoolerAsync(occupied, _cts.Token);
+                    ok += rok; fail = Math.Max(0, fail - rok);
+                    Log($"驱动包删除最终结果：成功 {ok}，失败 {fail}（结果已刷新）", fail == 0 ? "ok" : "warn");
+                }
             }
             catch (OperationCanceledException) { Log($"删除已停止（成功 {ok}，失败 {fail}）", "warn"); }
             catch (Exception ex) { Log("删除失败：" + ex.Message, "err"); }
@@ -884,33 +897,77 @@ namespace WinMigrationCleaner
             await RescanAllQuietAsync();
         }
 
-        async Task<(int ok, int fail, List<string> errors)> DeleteDriversCoreAsync(List<DriverPackage> selected, CancellationToken token)
+        async Task<(int ok, int fail, List<string> errors, List<DriverPackage> occupied)> DeleteDriversCoreAsync(
+            List<DriverPackage> selected, CancellationToken token, bool retryWithoutUninstall = false)
         {
             int ok = 0, fail = 0;
             var errors = new List<string>();
+            var occupied = new List<DriverPackage>();
             await Task.Run(() =>
             {
                 foreach (var d in selected)
                 {
                     token.ThrowIfCancellationRequested();
                     Dispatcher.Invoke(() => Status($"删除：{d.PublishedName}"));
-                    var (c, output) = Scanner.RunPnPUtil($"/delete-driver {d.PublishedName} /uninstall /force", 30000);
+                    // /force is redundant when /uninstall is present (pnputil warns);
+                    // plain /force is the right form for the spooler-stopped retry
+                    string args = retryWithoutUninstall
+                        ? $"/delete-driver {d.PublishedName} /force"
+                        : $"/delete-driver {d.PublishedName} /uninstall /force";
+                    var (c, output) = Scanner.RunPnPUtil(args, 30000);
                     if (c == 0) Interlocked.Increment(ref ok);
                     else
                     {
                         Interlocked.Increment(ref fail);
+                        if (IsOccupiedError(c, output)) lock (occupied) occupied.Add(d);
                         lock (errors) errors.Add($"{d.PublishedName} ← {d.OriginalName}：{PnPErrorReason(c, output)}");
                     }
                 }
             }, token);
-            return (ok, fail, errors);
+            return (ok, fail, errors, occupied);
+        }
+
+        // 0xE0000205 or "in use" text: something (typically the print spooler) still holds the package
+        static bool IsOccupiedError(int code, string output) =>
+            code == -536870939 ||
+            (code != 0 && output.Contains("已卸载驱动程序包")) ||
+            output.Contains("正在使用") || output.Contains("使用中") ||
+            output.Contains("in use", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>Stops the print spooler, retries deleting the occupied packages, restarts spooler.</summary>
+        async Task<(int ok, int fail)> RetryOccupiedWithSpoolerAsync(List<DriverPackage> occupied, CancellationToken token)
+        {
+            var dlg = new ConfirmDialog("驱动包被打印后台占用",
+                $"有 {occupied.Count} 个驱动包仍被打印后台服务（Print Spooler）占用，常规方式删不掉。",
+                "将临时停止打印后台服务 → 删除驱动包 → 自动重启该服务。\n" +
+                "期间打印功能短暂不可用，重启后自动恢复，无需重启电脑。\n\n" +
+                "涉及包：\n" + string.Join("\n", occupied.Take(5).Select(d => $"• {d.PublishedName} ← {d.OriginalName}")) +
+                (occupied.Count > 5 ? $"\n• … 共 {occupied.Count} 个" : ""),
+                "停止 spooler 并删除");
+            dlg.ShowDialog();
+            if (!dlg.Confirmed) return (0, 0);
+
+            Log("正在停止打印后台服务（spooler）…", "info");
+            if (!Scanner.StopServiceNow("spooler"))
+            {
+                Log("无法停止打印后台服务（可能有打印任务卡住），放弃本次强制删除。可重启电脑后再试。", "err");
+                return (0, 0);
+            }
+            var (ok, fail, errors, _) = await DeleteDriversCoreAsync(occupied, token, retryWithoutUninstall: true);
+            Log($"spooler 已停止，删除结果：成功 {ok}，失败 {fail}", fail == 0 ? "ok" : "err");
+            foreach (var e in errors) Log("失败原因：" + e, "err");
+            if (fail > 0)
+                Log("仍失败：驱动包文件被其它进程加载，请重启电脑后立即在软件里重试。", "warn");
+            if (Scanner.StartServiceNow("spooler")) Log("打印后台服务已重新启动", "ok");
+            else Log("注意：打印后台服务未自动恢复，请重启电脑或手动运行 net start spooler", "warn");
+            return (ok, fail);
         }
 
         void LogErrors(List<string> errors)
         {
             foreach (var e in errors) Log("失败原因：" + e, "err");
             if (errors.Count > 0)
-                Log("提示：被占用的驱动包请先断开对应硬件（打印机/U 盘等），重启后再试。", "warn");
+                Log("提示：占用类错误会自动提供「停止打印后台服务后删除」的选项；其它情况请断开对应硬件后重试。", "warn");
         }
 
         void SearchDrivers_TextChanged(object sender, TextChangedEventArgs e) => RefreshDriverView();

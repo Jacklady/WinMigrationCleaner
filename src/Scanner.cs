@@ -468,6 +468,34 @@ namespace WinMigrationCleaner
             return (ok, fail, errors);
         }
 
+        /// <summary>Stops a service and waits until stopped (used for spooler-assisted driver deletion).</summary>
+        public static bool StopServiceNow(string name)
+        {
+            try
+            {
+                using var sc = new ServiceController(name);
+                if (sc.Status == ServiceControllerStatus.Stopped) return true;
+                sc.Stop();
+                sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(20));
+                return true;
+            }
+            catch { return false; }
+        }
+
+        /// <summary>Starts a service and waits until running.</summary>
+        public static bool StartServiceNow(string name)
+        {
+            try
+            {
+                using var sc = new ServiceController(name);
+                if (sc.Status == ServiceControllerStatus.Running) return true;
+                sc.Start();
+                sc.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(20));
+                return true;
+            }
+            catch { return false; }
+        }
+
         // ---------------- helpers ----------------
         static string ExtractField(string text, string[] labels)
         {
