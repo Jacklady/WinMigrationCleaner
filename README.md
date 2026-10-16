@@ -58,13 +58,18 @@
 
 ### 方式二：从源码构建
 
-```bash
+以下命令在 **CMD 和 PowerShell 中均可直接执行**（单行，无注释）：
+
+```bat
 git clone https://github.com/Jacklady/WinMigrationCleaner.git
-cd WinMigrationCleaner/src
-dotnet build -c Release                       # 开发调试
-dotnet publish -c Release -r win-x64 --self-contained true `
-  -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ../dist
+cd WinMigrationCleaner\src
+dotnet build -c Release
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ..\dist
 ```
+
+构建完成后，成品位于 `WinMigrationCleaner\dist\WinMigrationCleaner.exe`。
+
+> 说明：日常使用无需自己构建，直接到 [Releases](../../releases) 下载 exe 即可。
 
 要求：Windows 10/11 + [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)（仅构建需要）。
 
