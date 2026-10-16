@@ -613,17 +613,28 @@
                             <ColumnDefinition/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Style="{StaticResource Sub}" Text="活动日志（每次操作都有记录）" VerticalAlignment="Center"/>
-                        <Button x:Name="BtnClearLog" Grid.Column="1" Style="{StaticResource BtnGhost}" Content="清空" FontSize="11" Padding="9,3"
-                                VerticalAlignment="Top" Click="BtnClearLog_Click"/>
-                        <Button x:Name="BtnToggleLog" Grid.Column="2" Style="{StaticResource BtnGhost}" Content="收起 ▾" FontSize="11" Padding="9,3"
+                        <TextBlock Style="{StaticResource Sub}" Text="活动日志（双击复制 · 右键更多 · Ctrl+C 复制所选）" VerticalAlignment="Center"/>
+                        <Button x:Name="BtnCopyLog" Grid.Column="1" Style="{StaticResource BtnGhost}" Content="复制全部" FontSize="11" Padding="9,3"
+                                VerticalAlignment="Top" Click="BtnCopyLog_Click"/>
+                        <Button x:Name="BtnClearLog" Grid.Column="2" Style="{StaticResource BtnGhost}" Content="清空" FontSize="11" Padding="9,3"
+                                Margin="8,0,0,0" VerticalAlignment="Top" Click="BtnClearLog_Click"/>
+                        <Button x:Name="BtnToggleLog" Grid.Column="3" Style="{StaticResource BtnGhost}" Content="收起 ▾" FontSize="11" Padding="9,3"
                                 Margin="8,0,0,0" VerticalAlignment="Top" Click="BtnToggleLog_Click"/>
                     </Grid>
                     <ListBox x:Name="LogList" Background="Transparent" BorderThickness="0" Height="118"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                              VirtualizingPanel.ScrollUnit="Pixel" Margin="0,6,0,0"
+                             MouseDoubleClick="LogList_MouseDoubleClick"
+                             PreviewKeyDown="LogList_PreviewKeyDown"
                              FontFamily="Consolas, Microsoft YaHei UI">
+                        <ListBox.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="复制所选 (Ctrl+C)" Click="CopySelectedLog_Click"/>
+                                <MenuItem Header="复制全部" Click="BtnCopyLog_Click"/>
+                            </ContextMenu>
+                        </ListBox.ContextMenu>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="0,1">

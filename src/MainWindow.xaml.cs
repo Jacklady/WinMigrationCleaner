@@ -438,7 +438,7 @@ namespace WinMigrationCleaner
                     (drvOk, drvFail, var drvErrors) = await DeleteDriversCoreAsync(drv, _cts.Token);
                     allErrors.AddRange(drvErrors);
                 }
-                Log($"一键清理完成：设备 成功 {devOk}/失败 {devFail}，驱动包 成功 {drvOk}/失败 {drvFail}",
+                Log($"一键清理完成：设备 成功 {devOk}/失败 {devFail}，驱动包 成功 {drvOk}/失败 {drvFail}（结果已刷新）",
                     devFail + drvFail == 0 ? "ok" : "warn");
                 LogErrors(allErrors);
             }
@@ -463,6 +463,8 @@ namespace WinMigrationCleaner
             try
             {
                 _devices = await Task.Run(Scanner.ScanAllDevices);
+                // keep ghost devices pre-selected so a retry is one click away
+                foreach (var d in _devices.Where(d => d.IsGhost)) d.Selected = true;
                 _services = await Task.Run(Scanner.ScanSuspectServices);
                 _drivers = await Task.Run(Scanner.ScanUnusedDriverPackages);
                 _scanned = true;
@@ -565,7 +567,7 @@ namespace WinMigrationCleaner
             try
             {
                 (ok, fail, var errors) = await RemoveDevicesCoreAsync(selected, _cts.Token);
-                Log($"移除完成：成功 {ok}，失败 {fail}", fail == 0 ? "ok" : "warn");
+                Log($"移除完成：成功 {ok}，失败 {fail}（结果已刷新）", fail == 0 ? "ok" : "warn");
                 LogErrors(errors);
             }
             catch (OperationCanceledException) { Log($"移除已停止（成功 {ok}，失败 {fail}）", "warn"); }
@@ -601,16 +603,20 @@ namespace WinMigrationCleaner
         // Translate pnputil failure into a human-readable reason + suggestion
         static string PnPErrorReason(int code, string output)
         {
-            string outLine = string.Join(" | ", output.Split('\n')
-                .Select(l => l.Trim())
-                .Where(l => l.Length > 0 && !l.StartsWith("Microsoft PnP") && !l.StartsWith("PNP UTIL"))
-                .Take(2));
+            // 0xE0000205: package was uninstalled from devices but could not be
+            // removed from DriverStore because something still holds it
+            if (code == -536870939 || (code != 0 && output.Contains("已卸载驱动程序包")))
+                return "已从设备卸载，但驱动包未能从 DriverStore 删除（仍被硬件占用，exit 0xE0000205）。请断开对应硬件（如打印机）并重启后重试";
             if (output.Contains("拒绝访问") || code == 5)
                 return $"拒绝访问，需要管理员权限（exit {code}）";
             if (output.Contains("正在使用") || output.Contains("使用中") || output.Contains("in use", StringComparison.OrdinalIgnoreCase))
                 return $"驱动包或设备仍被系统使用，请断开对应硬件（如打印机/USB 设备）后重试（exit {code}）";
             if (code == 259)
                 return "驱动包仍被设备引用，请先断开对应硬件再删除";
+            string outLine = string.Join(" | ", output.Split('\n')
+                .Select(l => l.Trim())
+                .Where(l => l.Length > 0 && !l.StartsWith("Microsoft PnP") && !l.StartsWith("PNP UTIL"))
+                .Take(2));
             if (outLine.Length > 0 && outLine.Length < 160) return $"{outLine}（exit {code}）";
             return $"pnputil 退出码 {code}";
         }
@@ -728,7 +734,7 @@ namespace WinMigrationCleaner
                     else Interlocked.Increment(ref fail);
                 }
             });
-            Log($"禁用完成：成功 {ok}，失败 {fail}", fail == 0 ? "ok" : "warn");
+            Log($"禁用完成：成功 {ok}，失败 {fail}（结果已刷新）", fail == 0 ? "ok" : "warn");
             SetBusy(false);
             await RescanAllQuietAsync();
         }
@@ -756,7 +762,7 @@ namespace WinMigrationCleaner
                     else Interlocked.Increment(ref fail);
                 }
             });
-            Log($"服务删除完成：成功 {ok}，失败 {fail}", fail == 0 ? "ok" : "warn");
+            Log($"服务删除完成：成功 {ok}，失败 {fail}（结果已刷新）", fail == 0 ? "ok" : "warn");
             SetBusy(false);
             await RescanAllQuietAsync();
         }
@@ -868,7 +874,7 @@ namespace WinMigrationCleaner
             try
             {
                 (ok, fail, var errors) = await DeleteDriversCoreAsync(selected, _cts.Token);
-                Log($"驱动包删除完成：成功 {ok}，失败 {fail}", fail == 0 ? "ok" : "warn");
+                Log($"驱动包删除完成：成功 {ok}，失败 {fail}（结果已刷新）", fail == 0 ? "ok" : "warn");
                 LogErrors(errors);
             }
             catch (OperationCanceledException) { Log($"删除已停止（成功 {ok}，失败 {fail}）", "warn"); }
@@ -971,6 +977,41 @@ namespace WinMigrationCleaner
         }
 
         // ---------------- activity log ----------------
+        static string LogToText(LogEntry l) => $"[{l.Time}] {l.Message}";
+
+        void CopyLogText(IEnumerable<LogEntry> entries)
+        {
+            try
+            {
+                string text = string.Join("\n", entries.Select(LogToText));
+                if (text.Length == 0) return;
+                Clipboard.SetText(text);
+                Status($"已复制 {entries.Count()} 条日志到剪贴板");
+            }
+            catch (Exception ex) { Status("复制失败：" + ex.Message); }
+        }
+
+        void BtnCopyLog_Click(object sender, RoutedEventArgs e) => CopyLogText(_logs);
+
+        void CopySelectedLog_Click(object sender, RoutedEventArgs e) =>
+            CopyLogText(LogList.SelectedItems.Cast<LogEntry>());
+
+        void LogList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (LogList.SelectedItem is LogEntry entry)
+                CopyLogText(new[] { entry });
+        }
+
+        void LogList_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.C)
+            {
+                var items = LogList.SelectedItems.Cast<LogEntry>().ToList();
+                CopyLogText(items.Count > 0 ? items : _logs);
+                e.Handled = true;
+            }
+        }
+
         void BtnClearLog_Click(object sender, RoutedEventArgs e)
         {
             _logs.Clear();
