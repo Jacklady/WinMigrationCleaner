@@ -16,6 +16,7 @@ namespace WinMigrationCleaner
         bool _isAdmin;
         bool _busy;
         bool _scanned;
+        TimeSpan _cacheAge = TimeSpan.Zero;
         Task _scanTask = Task.CompletedTask;
         string _activePage = "dash";
 
@@ -43,15 +44,16 @@ namespace WinMigrationCleaner
             ApplyAdminUi();
             BtnToggleTheme.Content = App.CurrentTheme == "light" ? "切换深色主题" : "切换浅色主题";
 
-            Log("欢迎使用 WinMigrationCleaner v1.1", "ok");
+            Log($"欢迎使用 WinMigrationCleaner v{typeof(MainWindow).Assembly.GetName().Version?.ToString(3)}", "ok");
             Log(_isAdmin ? "已以管理员身份运行" : "提示：清理操作需要管理员权限（左下角可一键提权重启）", "info");
 
             // hardware info (fast, sync ok)
             _hwRows = Scanner.GetHardwareInfo();
             InfoList.ItemsSource = _hwRows;
 
-            // v1.1: scan automatically on startup — no clicks needed
-            RunFullScan();
+            // v1.2: use cached scan result if fresh (≤7 days) — instant startup, F5 to refresh
+            if (!TryLoadCache())
+                RunFullScan();
 
             // diagnostic self-screenshot mode
             if (App.AutoScreenshot != null)
@@ -231,6 +233,53 @@ namespace WinMigrationCleaner
             }
         }
 
+        // ---------------- scan cache ----------------
+        bool TryLoadCache()
+        {
+            var cache = CacheStore.Load();
+            if (cache == null) return false;
+            var age = DateTime.Now - cache.ScannedAt;
+            if (age.TotalDays > 7) { Log("上次扫描结果已超过 7 天，将自动重新扫描", "info"); return false; }
+
+            _devices = cache.Devices;
+            foreach (var d in _devices.Where(d => d.IsGhost)) d.Selected = true;
+            _services = cache.Services;
+            _drivers = cache.Drivers;
+            _cacheAge = age;
+            _scanned = true;
+
+            RefreshDeviceView(); RefreshServiceView(); RefreshDriverView();
+            UpdateMetrics(); UpdateQuickCleanCard();
+
+            string ageText = AgeText(age);
+            Log($"已加载 {ageText}的扫描结果（设备 {_devices.Count} · 服务 {_services.Count} · 驱动包 {_drivers.Count}），按 F5 可重新扫描", "ok");
+            CacheInfoText.Text = $"上次扫描：{cache.ScannedAt:MM-dd HH:mm}（{ageText}）· 按 F5 或「重新扫描」获取最新数据";
+            CacheInfoText.Visibility = Visibility.Visible;
+            Status($"已加载缓存结果（{ageText}）");
+            return true;
+        }
+
+        static string AgeText(TimeSpan age) =>
+            age.TotalMinutes < 1 ? "刚刚" :
+            age.TotalHours < 1 ? $"{(int)age.TotalMinutes} 分钟前" :
+            age.TotalDays < 1 ? $"{(int)age.TotalHours} 小时前" :
+            $"{(int)age.TotalDays} 天前";
+
+        void SaveCache()
+        {
+            if (!_scanned) return;
+            CacheStore.Save(new ScanCache
+            {
+                ScannedAt = DateTime.Now,
+                Devices = _devices,
+                Services = _services,
+                Drivers = _drivers
+            });
+            _cacheAge = TimeSpan.Zero;
+            CacheInfoText.Text = $"上次扫描：{DateTime.Now:MM-dd HH:mm}（刚刚）· 按 F5 或「重新扫描」获取最新数据";
+            CacheInfoText.Visibility = Visibility.Visible;
+        }
+
         // ---------------- full scan (dashboard) ----------------
         void RunFullScan()
         {
@@ -277,6 +326,7 @@ namespace WinMigrationCleaner
                 RefreshDriverView();
                 UpdateMetrics();
                 UpdateQuickCleanCard();
+                SaveCache();
                 Log("全面扫描完成", "ok");
             }
             catch (OperationCanceledException)
@@ -418,6 +468,7 @@ namespace WinMigrationCleaner
                 _scanned = true;
                 RefreshDeviceView(); RefreshServiceView(); RefreshDriverView();
                 UpdateMetrics(); UpdateQuickCleanCard();
+                SaveCache();
             }
             catch (Exception ex) { Log("重新扫描失败：" + ex.Message, "err"); }
         }
@@ -462,6 +513,7 @@ namespace WinMigrationCleaner
                 foreach (var d in _devices.Where(d => d.IsGhost)) d.Selected = true;
                 _scanned = true;
                 RefreshDeviceView(); UpdateMetrics(); UpdateQuickCleanCard();
+                SaveCache();
                 int ghosts = _devices.Count(d => d.IsGhost);
                 Log($"设备扫描完成：本机所需 {_devices.Count - ghosts}，幽灵设备 {ghosts}", "ok");
             }
@@ -626,6 +678,7 @@ namespace WinMigrationCleaner
                 _services = await Task.Run(Scanner.ScanSuspectServices);
                 _scanned = true;
                 RefreshServiceView(); UpdateMetrics(); UpdateQuickCleanCard();
+                SaveCache();
                 Log($"可疑服务：{_services.Count} 个", "ok");
             }
             catch (Exception ex) { Log("扫描失败：" + ex.Message, "err"); }
@@ -763,6 +816,7 @@ namespace WinMigrationCleaner
                 _drivers = await Task.Run(Scanner.ScanUnusedDriverPackages);
                 _scanned = true;
                 RefreshDriverView(); UpdateMetrics(); UpdateQuickCleanCard();
+                SaveCache();
                 int cleanable = _drivers.Count(d => d.Risk == "可清理");
                 Log($"未使用驱动包：{_drivers.Count} 个（可清理 {cleanable}）", "ok");
             }

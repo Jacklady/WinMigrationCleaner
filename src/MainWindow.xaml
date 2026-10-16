@@ -122,7 +122,7 @@
                         </Border>
                         <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
                             <TextBlock Text="WinMigration" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}"/>
-                            <TextBlock Text="Cleaner v1.1" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" Margin="0,-2,0,0"/>
+                            <TextBlock Text="Cleaner v1.2" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" Margin="0,-2,0,0"/>
                         </StackPanel>
                     </StackPanel>
                     <TextBlock Text="硬件迁移残留清理" FontSize="11" Foreground="{DynamicResource Brush.SubText}" Margin="2,12,0,0"/>
@@ -200,7 +200,9 @@
                         <StackPanel>
                             <TextBlock Style="{StaticResource PageTitle}" Text="仪表盘"/>
                             <TextBlock Style="{StaticResource Sub}" Margin="0,7,0,0"
-                                       Text="启动时已自动扫描。点击下方卡片可跳转对应清理页，或直接一键清理全部安全项。"/>
+                                       Text="点击下方卡片可跳转对应清理页，或直接一键清理全部安全项。"/>
+                            <TextBlock x:Name="CacheInfoText" Style="{StaticResource Sub}" FontSize="11.5"
+                                       Margin="0,4,0,0" Visibility="Collapsed"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
                             <Button x:Name="BtnScanAll" Style="{StaticResource BtnPrimary}" Content="重新扫描 (F5)" Click="BtnScanAll_Click"/>
@@ -587,9 +589,9 @@
                                Text="当你把 Windows 系统从一台电脑迁移到另一台（换主板、换机装老系统、笔记本换台式机），旧硬件会在系统里留下三类残留：幽灵设备记录、厂商驱动服务和 DriverStore 驱动包。本工具把这三类残留的检测与清理整合到一起，并内置多层安全保护：自动保留当前平台的核心驱动套件，识别属于已安装软件的驱动包，并默认以「只报告」方式呈现可清理项，所有删除操作均需显式确认。"/>
                     <Border Style="{StaticResource CardBorder}" Margin="0,22,0,0">
                         <StackPanel>
-                            <TextBlock FontWeight="SemiBold" Text="v1.1 交互改进" Foreground="{DynamicResource Brush.Text}"/>
+                            <TextBlock FontWeight="SemiBold" Text="v1.1 / v1.2 改进" Foreground="{DynamicResource Brush.Text}"/>
                             <TextBlock Foreground="{DynamicResource Brush.SubText}" FontSize="12" LineHeight="21" TextWrapping="Wrap" Margin="0,10,0,0"
-                                       Text="• 启动即自动扫描，无需手动点击&#10;• 仪表盘新增「一键清理安全项」：幽灵设备 + 可清理驱动包一次完成&#10;• 各列表页支持实时搜索过滤、点击列头排序、Ctrl+A 全选、Ctrl+F 搜索&#10;• 幽灵设备扫描后默认勾选，操作按钮实时显示已选数量、未选中时自动禁用&#10;• 活动日志可折叠，侧边导航实时显示各类残留计数"/>
+                                       Text="• 启动即自动扫描，无需手动点击&#10;• 仪表盘新增「一键清理安全项」：幽灵设备 + 可清理驱动包一次完成&#10;• 各列表页支持实时搜索过滤、点击列头排序、Ctrl+A 全选、Ctrl+F 搜索&#10;• 幽灵设备扫描后默认勾选，操作按钮实时显示已选数量、未选中时自动禁用&#10;• 活动日志可折叠，侧边导航实时显示各类残留计数&#10;• 扫描结果本地缓存（7 天内有效）：下次启动直接使用上次结果，F5 随时刷新&#10;• 清理失败时逐条显示原因与解决建议"/>
                         </StackPanel>
                     </Border>
                     <Border Style="{StaticResource CardBorder}" Margin="0,14,0,0">
@@ -599,7 +601,7 @@
                                        Text="• 幽灵设备：仅移除 Present=false 的记录，重新插入硬件会自动重装&#10;• 驱动包：仅允许删除标记为「可清理」的项，删除前二次确认&#10;• 服务：仅显示命中厂商关键字的候选，删除前单独确认&#10;• 建议操作前创建系统还原点；删除后重启一次让变更完全生效"/>
                         </StackPanel>
                     </Border>
-                    <TextBlock Style="{StaticResource Sub}" Margin="0,18,0,20" Text="MIT License · v1.1.0"/>
+                    <TextBlock Style="{StaticResource Sub}" Margin="0,18,0,20" Text="MIT License · v1.2.0"/>
                 </StackPanel>
             </ScrollViewer>
 
