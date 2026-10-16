@@ -1,7 +1,7 @@
 # 换了主板/重装系统后，设备管理器里那些"幽灵设备"我终于找到批量清理的办法了
 
 > 适用读者：折腾过换主板不重装系统、整机迁移克隆系统盘、笔记本换台式机的 Windows 用户。
-> 项目地址：https://github.com/Jacklady/WinMigrationCleaner （Gitee 镜像：https://gitee.com/Jacklady/WinMigrationCleaner ）
+> 项目地址：https://github.com/Jacklady/WinMigrationCleaner （Gitee 镜像：https://gitee.com/jackoriginal/win-migration-cleaner ）
 
 ## 起因
 
@@ -69,6 +69,6 @@ C# / .NET 9 WPF，纯 code-behind 小项目，无第三方 UI 库（Fluent 风�
 MIT 开源，欢迎 Issue/PR。厂商关键字和软件白名单在 `Scanner.cs` 顶部，补充关键字就能识别更多残留——这块特别需要大家的真实数据来完善。
 
 - GitHub：https://github.com/Jacklady/WinMigrationCleaner
-- Gitee：https://gitee.com/Jacklady/WinMigrationCleaner
+- Gitee：https://gitee.com/jackoriginal/win-migration-cleaner
 
 如果帮到了你，给个 Star 就是对开源作者最大的鼓励 🙏

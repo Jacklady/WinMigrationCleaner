@@ -5,7 +5,7 @@
 [![.NET](https://img.shields.io/badge/.NET-9.0_WPF-6C7BFF)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-2BC98A)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows_10/11-0078D4)]()
-[![Gitee 镜像](https://img.shields.io/badge/镜像-Gitee-C71D23)](https://gitee.com/Jacklady/WinMigrationCleaner)
+[![Gitee 镜像](https://img.shields.io/badge/镜像-Gitee-C71D23)](https://gitee.com/jackoriginal/win-migration-cleaner)
 
 把 Windows 系统从一台电脑迁移到另一台（换主板、换机装老系统、笔记本换台式机）之后，
 旧硬件会在系统里留下三类残留。本工具将它们的检测与清理整合到一个图形界面里，并内置多层安全保护。
