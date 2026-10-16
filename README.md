@@ -59,7 +59,7 @@
 ### 方式二：从源码构建
 
 ```bash
-git clone https://github.com/<you>/WinMigrationCleaner.git
+git clone https://github.com/Jacklady/WinMigrationCleaner.git
 cd WinMigrationCleaner/src
 dotnet build -c Release                       # 开发调试
 dotnet publish -c Release -r win-x64 --self-contained true `
