@@ -477,6 +477,8 @@ namespace WinMigrationCleaner
                 RefreshDeviceView(); RefreshServiceView(); RefreshDriverView();
                 UpdateMetrics(); UpdateQuickCleanCard();
                 SaveCache();
+                Log($"已自动重新扫描：设备 {_devices.Count}（幽灵 {_devices.Count(d => d.IsGhost)}）· " +
+                    $"服务 {_services.Count} · 驱动包 {_drivers.Count}（可清理 {_drivers.Count(d => d.Risk == "可清理")}）", "info");
             }
             catch (Exception ex) { Log("重新扫描失败：" + ex.Message, "err"); }
         }
@@ -594,7 +596,18 @@ namespace WinMigrationCleaner
                     token.ThrowIfCancellationRequested();
                     Dispatcher.Invoke(() => Status($"移除：{d.Name}"));
                     var (c, output) = Scanner.RunPnPUtil($"/remove-device \"{d.InstanceId}\"", 15000);
-                    if (c == 0) Interlocked.Increment(ref ok);
+                    if (c == 0)
+                    {
+                        Interlocked.Increment(ref ok);
+                        // update UI immediately — don't wait for the post-op rescan
+                        Dispatcher.Invoke(() =>
+                        {
+                            _devices.Remove(d);
+                            RefreshDeviceView();
+                            UpdateMetrics();
+                            UpdateQuickCleanCard();
+                        });
+                    }
                     else
                     {
                         Interlocked.Increment(ref fail);
@@ -736,7 +749,15 @@ namespace WinMigrationCleaner
                 foreach (var s in selected)
                 {
                     Dispatcher.Invoke(() => Status($"禁用：{s.Name}"));
-                    if (Scanner.SetServiceStartType(s.Name, 4)) Interlocked.Increment(ref ok);
+                    if (Scanner.SetServiceStartType(s.Name, 4))
+                    {
+                        Interlocked.Increment(ref ok);
+                        Dispatcher.Invoke(() =>
+                        {
+                            s.State = "已禁用"; s.StartMode = "禁用";
+                            RefreshServiceView(); UpdateMetrics();
+                        });
+                    }
                     else Interlocked.Increment(ref fail);
                 }
             });
@@ -764,7 +785,15 @@ namespace WinMigrationCleaner
                 foreach (var s in selected)
                 {
                     Dispatcher.Invoke(() => Status($"删除服务：{s.Name}"));
-                    if (Scanner.DeleteService(s.Name)) Interlocked.Increment(ref ok);
+                    if (Scanner.DeleteService(s.Name))
+                    {
+                        Interlocked.Increment(ref ok);
+                        Dispatcher.Invoke(() =>
+                        {
+                            _services.Remove(s);
+                            RefreshServiceView(); UpdateMetrics();
+                        });
+                    }
                     else Interlocked.Increment(ref fail);
                 }
             });
@@ -915,7 +944,18 @@ namespace WinMigrationCleaner
                         ? $"/delete-driver {d.PublishedName} /force"
                         : $"/delete-driver {d.PublishedName} /uninstall /force";
                     var (c, output) = Scanner.RunPnPUtil(args, 30000);
-                    if (c == 0) Interlocked.Increment(ref ok);
+                    if (c == 0)
+                    {
+                        Interlocked.Increment(ref ok);
+                        // update UI immediately — don't wait for the post-op rescan
+                        Dispatcher.Invoke(() =>
+                        {
+                            _drivers.Remove(d);
+                            RefreshDriverView();
+                            UpdateMetrics();
+                            UpdateQuickCleanCard();
+                        });
+                    }
                     else
                     {
                         Interlocked.Increment(ref fail);
