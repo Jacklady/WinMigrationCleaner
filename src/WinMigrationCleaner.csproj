@@ -8,7 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>WinMigrationCleaner</AssemblyName>
     <RootNamespace>WinMigrationCleaner</RootNamespace>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Authors>WinMigrationCleaner Contributors</Authors>
     <Product>WinMigrationCleaner</Product>
     <Description>Windows hardware migration leftover cleaner - ghost devices, junk services and stale driver packages</Description>

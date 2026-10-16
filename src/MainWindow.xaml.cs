@@ -373,20 +373,24 @@ namespace WinMigrationCleaner
             _cts = new CancellationTokenSource();
             SetBusy(true, "一键清理中…");
             int devOk = 0, devFail = 0, drvOk = 0, drvFail = 0;
+            var allErrors = new List<string>();
             try
             {
                 if (ghosts.Count > 0)
                 {
                     Log($"开始移除 {ghosts.Count} 个幽灵设备…", "info");
-                    (devOk, devFail) = await RemoveDevicesCoreAsync(ghosts, _cts.Token);
+                    (devOk, devFail, var devErrors) = await RemoveDevicesCoreAsync(ghosts, _cts.Token);
+                    allErrors.AddRange(devErrors);
                 }
                 if (drv.Count > 0 && !_cts.Token.IsCancellationRequested)
                 {
                     Log($"开始删除 {drv.Count} 个可清理驱动包…", "info");
-                    (drvOk, drvFail) = await DeleteDriversCoreAsync(drv, _cts.Token);
+                    (drvOk, drvFail, var drvErrors) = await DeleteDriversCoreAsync(drv, _cts.Token);
+                    allErrors.AddRange(drvErrors);
                 }
                 Log($"一键清理完成：设备 成功 {devOk}/失败 {devFail}，驱动包 成功 {drvOk}/失败 {drvFail}",
                     devFail + drvFail == 0 ? "ok" : "warn");
+                LogErrors(allErrors);
             }
             catch (OperationCanceledException)
             {
@@ -508,8 +512,9 @@ namespace WinMigrationCleaner
             int ok = 0, fail = 0;
             try
             {
-                (ok, fail) = await RemoveDevicesCoreAsync(selected, _cts.Token);
+                (ok, fail, var errors) = await RemoveDevicesCoreAsync(selected, _cts.Token);
                 Log($"移除完成：成功 {ok}，失败 {fail}", fail == 0 ? "ok" : "warn");
+                LogErrors(errors);
             }
             catch (OperationCanceledException) { Log($"移除已停止（成功 {ok}，失败 {fail}）", "warn"); }
             catch (Exception ex) { Log("移除失败：" + ex.Message, "err"); }
@@ -518,21 +523,44 @@ namespace WinMigrationCleaner
             await RescanAllQuietAsync();
         }
 
-        async Task<(int ok, int fail)> RemoveDevicesCoreAsync(List<PhantomDevice> selected, CancellationToken token)
+        async Task<(int ok, int fail, List<string> errors)> RemoveDevicesCoreAsync(List<PhantomDevice> selected, CancellationToken token)
         {
             int ok = 0, fail = 0, done = 0;
+            var errors = new List<string>();
             await Task.Run(() =>
             {
                 foreach (var d in selected)
                 {
                     token.ThrowIfCancellationRequested();
                     Dispatcher.Invoke(() => Status($"移除：{d.Name}"));
-                    var (c, _) = Scanner.RunPnPUtil($"/remove-device \"{d.InstanceId}\"", 15000);
-                    if (c == 0) Interlocked.Increment(ref ok); else Interlocked.Increment(ref fail);
+                    var (c, output) = Scanner.RunPnPUtil($"/remove-device \"{d.InstanceId}\"", 15000);
+                    if (c == 0) Interlocked.Increment(ref ok);
+                    else
+                    {
+                        Interlocked.Increment(ref fail);
+                        lock (errors) errors.Add($"{d.Name}：{PnPErrorReason(c, output)}");
+                    }
                     Dispatcher.Invoke(() => { done++; MainProgress.Value = done; });
                 }
             }, token);
-            return (ok, fail);
+            return (ok, fail, errors);
+        }
+
+        // Translate pnputil failure into a human-readable reason + suggestion
+        static string PnPErrorReason(int code, string output)
+        {
+            string outLine = string.Join(" | ", output.Split('\n')
+                .Select(l => l.Trim())
+                .Where(l => l.Length > 0 && !l.StartsWith("Microsoft PnP") && !l.StartsWith("PNP UTIL"))
+                .Take(2));
+            if (output.Contains("拒绝访问") || code == 5)
+                return $"拒绝访问，需要管理员权限（exit {code}）";
+            if (output.Contains("正在使用") || output.Contains("使用中") || output.Contains("in use", StringComparison.OrdinalIgnoreCase))
+                return $"驱动包或设备仍被系统使用，请断开对应硬件（如打印机/USB 设备）后重试（exit {code}）";
+            if (code == 259)
+                return "驱动包仍被设备引用，请先断开对应硬件再删除";
+            if (outLine.Length > 0 && outLine.Length < 160) return $"{outLine}（exit {code}）";
+            return $"pnputil 退出码 {code}";
         }
 
         // ---------------- devices view (filter + sort) ----------------
@@ -785,8 +813,9 @@ namespace WinMigrationCleaner
             int ok = 0, fail = 0;
             try
             {
-                (ok, fail) = await DeleteDriversCoreAsync(selected, _cts.Token);
+                (ok, fail, var errors) = await DeleteDriversCoreAsync(selected, _cts.Token);
                 Log($"驱动包删除完成：成功 {ok}，失败 {fail}", fail == 0 ? "ok" : "warn");
+                LogErrors(errors);
             }
             catch (OperationCanceledException) { Log($"删除已停止（成功 {ok}，失败 {fail}）", "warn"); }
             catch (Exception ex) { Log("删除失败：" + ex.Message, "err"); }
@@ -795,20 +824,33 @@ namespace WinMigrationCleaner
             await RescanAllQuietAsync();
         }
 
-        async Task<(int ok, int fail)> DeleteDriversCoreAsync(List<DriverPackage> selected, CancellationToken token)
+        async Task<(int ok, int fail, List<string> errors)> DeleteDriversCoreAsync(List<DriverPackage> selected, CancellationToken token)
         {
             int ok = 0, fail = 0;
+            var errors = new List<string>();
             await Task.Run(() =>
             {
                 foreach (var d in selected)
                 {
                     token.ThrowIfCancellationRequested();
                     Dispatcher.Invoke(() => Status($"删除：{d.PublishedName}"));
-                    var (c, _) = Scanner.RunPnPUtil($"/delete-driver {d.PublishedName} /uninstall /force", 30000);
-                    if (c == 0) Interlocked.Increment(ref ok); else Interlocked.Increment(ref fail);
+                    var (c, output) = Scanner.RunPnPUtil($"/delete-driver {d.PublishedName} /uninstall /force", 30000);
+                    if (c == 0) Interlocked.Increment(ref ok);
+                    else
+                    {
+                        Interlocked.Increment(ref fail);
+                        lock (errors) errors.Add($"{d.PublishedName} ← {d.OriginalName}：{PnPErrorReason(c, output)}");
+                    }
                 }
             }, token);
-            return (ok, fail);
+            return (ok, fail, errors);
+        }
+
+        void LogErrors(List<string> errors)
+        {
+            foreach (var e in errors) Log("失败原因：" + e, "err");
+            if (errors.Count > 0)
+                Log("提示：被占用的驱动包请先断开对应硬件（打印机/U 盘等），重启后再试。", "warn");
         }
 
         void SearchDrivers_TextChanged(object sender, TextChangedEventArgs e) => RefreshDriverView();
