@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="WinMigrationCleaner — 硬件迁移残留清理" Height="740" Width="1200"
         MinHeight="620" MinWidth="1000" WindowStartupLocation="CenterScreen"
-        Background="{DynamicResource Brush.Bg}" FontFamily="Segoe UI, Microsoft YaHei UI">
+        Background="{DynamicResource Brush.Bg}" FontFamily="Segoe UI, Microsoft YaHei UI"
+        PreviewKeyDown="MainWindow_PreviewKeyDown">
 
     <Window.Resources>
         <Style x:Key="PageTitle" TargetType="TextBlock">
@@ -20,32 +21,49 @@
             <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
             <Setter Property="FontWeight" Value="Bold"/>
         </Style>
-        <Style x:Key="ChipLabel" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource Brush.SubText}"/>
-            <Setter Property="FontSize" Value="11.5"/>
-        </Style>
         <Style x:Key="ChipValue" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12.5"/>
             <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
         </Style>
-        <Style TargetType="GridViewColumnHeader">
+        <Style x:Key="EmptyIcon" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="34"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+        <!-- clickable sortable column header -->
+        <Style x:Key="SortHeader" TargetType="GridViewColumnHeader">
             <Setter Property="Background" Value="{DynamicResource Brush.Chip}"/>
             <Setter Property="Foreground" Value="{DynamicResource Brush.SubText}"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Padding" Value="10,9"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="GridViewColumnHeader">
                         <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="0,0,0,1" Padding="{TemplateBinding Padding}">
-                            <TextBlock Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}"/>
+                                <TextBlock x:Name="arrow" Text=" ↓" Foreground="{DynamicResource Brush.Accent}"
+                                           FontSize="11" Visibility="Collapsed"/>
+                            </StackPanel>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
+                            </Trigger>
+                            <Trigger Property="Tag" Value="sorted">
+                                <Setter TargetName="arrow" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+        <!-- implicit fallback so headerless columns (checkbox) don't use the default white style -->
+        <Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource SortHeader}"/>
         <Style x:Key="ListViewBase" TargetType="ListView">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -104,7 +122,7 @@
                         </Border>
                         <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
                             <TextBlock Text="WinMigration" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}"/>
-                            <TextBlock Text="Cleaner" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" Margin="0,-2,0,0"/>
+                            <TextBlock Text="Cleaner v1.1" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" Margin="0,-2,0,0"/>
                         </StackPanel>
                     </StackPanel>
                     <TextBlock Text="硬件迁移残留清理" FontSize="11" Foreground="{DynamicResource Brush.SubText}" Margin="2,12,0,0"/>
@@ -124,13 +142,39 @@
                                     Margin="0,8,0,0" Padding="8,6" Click="BtnToggleTheme_Click"/>
                         </StackPanel>
                     </Border>
+                    <TextBlock Text="快捷键：F5 重扫 · Ctrl+A 全选&#10;Ctrl+F 搜索 · 双击卡片跳转" FontSize="10.5"
+                               Foreground="{DynamicResource Brush.SubText}" Margin="4,10,0,0" Opacity="0.8" LineHeight="16"/>
                 </StackPanel>
 
                 <StackPanel Margin="0,20,0,0">
                     <Button x:Name="NavDash" Style="{StaticResource NavButton}" Tag="active" Click="Nav_Click" Content="仪表盘"/>
-                    <Button x:Name="NavDevices" Style="{StaticResource NavButton}" Click="Nav_Click" Content="幽灵设备"/>
-                    <Button x:Name="NavServices" Style="{StaticResource NavButton}" Click="Nav_Click" Content="系统服务"/>
-                    <Button x:Name="NavDrivers" Style="{StaticResource NavButton}" Click="Nav_Click" Content="驱动包"/>
+                    <Button x:Name="NavDevices" Style="{StaticResource NavButton}" Click="Nav_Click">
+                        <Grid>
+                            <TextBlock Text="幽灵设备"/>
+                            <Border x:Name="BadgeDevices" Background="{DynamicResource Brush.Danger}" CornerRadius="8"
+                                    HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed" Margin="0,0,6,0">
+                                <TextBlock x:Name="BadgeDevicesText" Style="{StaticResource BadgeText}" Text="0" Margin="7,1.5"/>
+                            </Border>
+                        </Grid>
+                    </Button>
+                    <Button x:Name="NavServices" Style="{StaticResource NavButton}" Click="Nav_Click">
+                        <Grid>
+                            <TextBlock Text="系统服务"/>
+                            <Border x:Name="BadgeServices" Background="{DynamicResource Brush.Warn}" CornerRadius="8"
+                                    HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed" Margin="0,0,6,0">
+                                <TextBlock x:Name="BadgeServicesText" Style="{StaticResource BadgeText}" Text="0" Margin="7,1.5"/>
+                            </Border>
+                        </Grid>
+                    </Button>
+                    <Button x:Name="NavDrivers" Style="{StaticResource NavButton}" Click="Nav_Click">
+                        <Grid>
+                            <TextBlock Text="驱动包"/>
+                            <Border x:Name="BadgeDrivers" Background="{DynamicResource Brush.Green}" CornerRadius="8"
+                                    HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed" Margin="0,0,6,0">
+                                <TextBlock x:Name="BadgeDriversText" Style="{StaticResource BadgeText}" Text="0" Margin="7,1.5"/>
+                            </Border>
+                        </Grid>
+                    </Button>
                     <Button x:Name="NavAbout" Style="{StaticResource NavButton}" Click="Nav_Click" Content="关于"/>
                 </StackPanel>
             </DockPanel>
@@ -140,7 +184,7 @@
         <Grid Grid.Column="1" Margin="26,22,26,0">
             <Grid.RowDefinitions>
                 <RowDefinition/>
-                <RowDefinition Height="168"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="10"/>
                 <RowDefinition Height="30"/>
             </Grid.RowDefinitions>
@@ -156,10 +200,10 @@
                         <StackPanel>
                             <TextBlock Style="{StaticResource PageTitle}" Text="仪表盘"/>
                             <TextBlock Style="{StaticResource Sub}" Margin="0,7,0,0"
-                                       Text="检测从旧电脑迁移系统后遗留的幽灵设备、厂商服务和过期驱动包 · 点击下方卡片可跳转对应清理页"/>
+                                       Text="启动时已自动扫描。点击下方卡片可跳转对应清理页，或直接一键清理全部安全项。"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                            <Button x:Name="BtnScanAll" Style="{StaticResource BtnPrimary}" Content="开始全面扫描" Click="BtnScanAll_Click"/>
+                            <Button x:Name="BtnScanAll" Style="{StaticResource BtnPrimary}" Content="重新扫描 (F5)" Click="BtnScanAll_Click"/>
                             <Button x:Name="BtnExportReport" Style="{StaticResource BtnGhost}" Content="导出报告" Margin="10,0,0,0" Click="BtnExportReport_Click"/>
                         </StackPanel>
                     </Grid>
@@ -213,6 +257,24 @@
                         </Border>
                     </UniformGrid>
 
+                    <!-- one-click quick clean -->
+                    <Border x:Name="QuickCleanCard" Style="{StaticResource CardBorder}" Margin="0,16,0,0" Padding="18,15"
+                            Background="{DynamicResource Brush.AccentSoft}" BorderBrush="{DynamicResource Brush.Accent}" Visibility="Collapsed">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="一键清理安全项" FontSize="14.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}"/>
+                                <TextBlock x:Name="QuickCleanText" Style="{StaticResource Sub}" Margin="0,6,0,0" TextWrapping="Wrap"
+                                           Text="扫描完成后这里会汇总可安全清理的内容。"/>
+                            </StackPanel>
+                            <Button x:Name="BtnQuickClean" Grid.Column="1" Style="{StaticResource BtnPrimary}" Content="一键清理"
+                                    VerticalAlignment="Center" Margin="16,0,0,0" Click="BtnQuickClean_Click"/>
+                        </Grid>
+                    </Border>
+
                     <!-- hardware info list -->
                     <Border Style="{DynamicResource CardBorder}" Margin="0,16,0,20" Padding="18,14">
                         <StackPanel>
@@ -245,148 +307,276 @@
             <Grid x:Name="PageDevices" Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <Grid>
+                <StackPanel>
+                    <TextBlock Style="{StaticResource PageTitle}" Text="幽灵设备"/>
+                    <TextBlock Style="{StaticResource Sub}" Margin="0,7,0,0"
+                               Text="列出全部设备：正在工作的标记为「本机所需」，已断开硬件的残留记录标记为「幽灵设备」（可安全移除）。"/>
+                </StackPanel>
+                <Grid Grid.Row="1" Margin="0,14,0,0">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="300"/>
                         <ColumnDefinition/>
-                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource PageTitle}" Text="幽灵设备"/>
-                        <TextBlock Style="{StaticResource Sub}" Margin="0,7,0,0"
-                                   Text="列出全部设备：正在工作的标记为「本机所需」，已断开硬件的残留记录标记为「幽灵设备」（可安全移除）。"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                        <Button x:Name="BtnScanDevices" Style="{StaticResource BtnGhost}" Content="扫描" Click="BtnScanDevices_Click"/>
-                        <Button x:Name="BtnSelectAllDevices" Style="{StaticResource BtnGhost}" Content="全选 / 取消" Margin="8,0,0,0" Click="BtnSelectAllDevices_Click"/>
-                        <Button x:Name="BtnRemoveDevices" Style="{StaticResource BtnDanger}" Content="移除所选" Margin="8,0,0,0" Click="BtnRemoveDevices_Click"/>
+                    <TextBox x:Name="SearchDevices" Style="{StaticResource SearchBox}" Tag="搜索设备名称 / 类别 / 实例 ID…"
+                             TextChanged="SearchDevices_TextChanged"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="BtnScanDevices" Style="{StaticResource BtnGhost}" Content="重新扫描" Click="BtnScanDevices_Click"/>
+                        <Button x:Name="BtnSelectAllDevices" Style="{StaticResource BtnGhost}" Content="全选 / 取消 (Ctrl+A)" Margin="8,0,0,0" Click="BtnSelectAllDevices_Click"/>
+                        <Button x:Name="BtnRemoveDevices" Style="{StaticResource BtnDanger}" Content="移除所选" Margin="8,0,0,0"
+                                IsEnabled="False" Click="BtnRemoveDevices_Click"/>
                     </StackPanel>
                 </Grid>
-                <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,16,0,0" Padding="8">
+                <Border Grid.Row="2" Style="{StaticResource CardBorder}" Margin="0,12,0,0" Padding="8">
                     <Grid>
-                    <ListView x:Name="ListDevices" Style="{StaticResource ListViewBase}" AlternationCount="2">
-                        <ListView.View>
-                            <GridView>
-                                <GridViewColumn Width="46">
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <CheckBox IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                      IsEnabled="{Binding CanSelect}"
-                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                                <GridViewColumn Header="设备名称" Width="320" DisplayMemberBinding="{Binding Name}"/>
-                                <GridViewColumn Header="类别" Width="120" DisplayMemberBinding="{Binding Class}"/>
-                                <GridViewColumn Header="状态" Width="96" DisplayMemberBinding="{Binding Status}"/>
-                                <GridViewColumn Header="实例 ID" Width="380" DisplayMemberBinding="{Binding InstanceId}"/>
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
-                    <TextBlock x:Name="DevicesEmpty" Text="没有发现幽灵设备 —— 当前硬件的记录都在正常工作"
-                               FontSize="13" Foreground="{DynamicResource Brush.SubText}"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                        <ListView x:Name="ListDevices" Style="{StaticResource ListViewBase}" AlternationCount="2">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Width="46">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          IsEnabled="{Binding CanSelect}" Click="DevCheck_Click"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="320">
+                                        <GridViewColumnHeader Style="{StaticResource SortHeader}" Tag="Name" Click="DeviceHeader_Click">设备名称</GridViewColumnHeader>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate><TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/></DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="120">
+                                        <GridViewColumnHeader Style="{StaticResource SortHeader}" Tag="Class" Click="DeviceHeader_Click">类别</GridViewColumnHeader>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate><TextBlock Text="{Binding Class}" TextTrimming="CharacterEllipsis"/></DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="110">
+                                        <GridViewColumnHeader Style="{StaticResource SortHeader}" Tag="IsGhost" Click="DeviceHeader_Click">状态</GridViewColumnHeader>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock FontSize="11.5" Padding="7,2.5" Text="{Binding Status}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.SubText}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsGhost}" Value="True">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}"/>
+                                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="380">
+                                        <GridViewColumnHeader Style="{StaticResource SortHeader}" Tag="InstanceId" Click="DeviceHeader_Click">实例 ID</GridViewColumnHeader>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate><TextBlock Text="{Binding InstanceId}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.SubText}"/></DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <StackPanel x:Name="DevicesEmpty" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource EmptyIcon}" Foreground="{DynamicResource Brush.Green}" Text="✓"/>
+                            <TextBlock x:Name="DevicesEmptyText" Text="没有发现幽灵设备 —— 当前硬件的记录都在正常工作" FontSize="13"
+                                       Foreground="{DynamicResource Brush.SubText}" HorizontalAlignment="Center"/>
+                        </StackPanel>
                     </Grid>
                 </Border>
-                <TextBlock x:Name="DevicesSummary" Grid.Row="2" Style="{StaticResource Sub}" Margin="6,10,0,4" Text="尚未扫描。"/>
-                <!-- empty-state placeholder for devices page -->
-
+                <TextBlock x:Name="DevicesSummary" Grid.Row="3" Style="{StaticResource Sub}" Margin="6,10,0,4" Text="正在自动扫描…"/>
             </Grid>
 
             <!-- [Page Services] -->
             <Grid x:Name="PageServices" Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <Grid>
+                <StackPanel>
+                    <TextBlock Style="{StaticResource PageTitle}" Text="系统服务"/>
+                    <TextBlock Style="{StaticResource Sub}" Margin="0,7,0,0"
+                               Text="检测到来自其它硬件厂商的驱动服务。建议先「禁用」观察几天，确认无影响后再删除。"/>
+                </StackPanel>
+                <Grid Grid.Row="1" Margin="0,14,0,0">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="300"/>
                         <ColumnDefinition/>
-                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource PageTitle}" Text="系统服务"/>
-                        <TextBlock Style="{StaticResource Sub}" Margin="0,7,0,0"
-                                   Text="检测到来自其它硬件厂商的驱动服务。删除前请确认当前电脑已不需要它们。"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                        <Button x:Name="BtnScanServices" Style="{StaticResource BtnGhost}" Content="扫描" Click="BtnScanServices_Click"/>
-                        <Button x:Name="BtnDisableServices" Style="{StaticResource BtnGhost}" Content="禁用所选" Margin="8,0,0,0" Click="BtnDisableServices_Click"/>
-                        <Button x:Name="BtnDeleteServices" Style="{StaticResource BtnDanger}" Content="删除所选" Margin="8,0,0,0" Click="BtnDeleteServices_Click"/>
+                    <TextBox x:Name="SearchServices" Style="{StaticResource SearchBox}" Tag="搜索服务名 / 显示名 / 判定依据…"
+                             TextChanged="SearchServices_TextChanged"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="BtnScanServices" Style="{StaticResource BtnGhost}" Content="重新扫描" Click="BtnScanServices_Click"/>
+                        <Button x:Name="BtnSelectAllServices" Style="{StaticResource BtnGhost}" Content="全选 / 取消 (Ctrl+A)" Margin="8,0,0,0" Click="BtnSelectAllServices_Click"/>
+                        <Button x:Name="BtnDisableServices" Style="{StaticResource BtnGhost}" Content="禁用所选" Margin="8,0,0,0"
+                                IsEnabled="False" Click="BtnDisableServices_Click"/>
+                        <Button x:Name="BtnDeleteServices" Style="{StaticResource BtnDanger}" Content="删除所选" Margin="8,0,0,0"
+                                IsEnabled="False" Click="BtnDeleteServices_Click"/>
                     </StackPanel>
                 </Grid>
-                <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,16,0,0" Padding="8">
-                    <ListView x:Name="ListServices" Style="{StaticResource ListViewBase}" AlternationCount="2">
-                        <ListView.View>
-                            <GridView>
-                                <GridViewColumn Width="46">
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <CheckBox IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                                <GridViewColumn Header="服务名" Width="220" DisplayMemberBinding="{Binding Name}"/>
-                                <GridViewColumn Header="显示名" Width="250" DisplayMemberBinding="{Binding DisplayName}"/>
-                                <GridViewColumn Header="状态" Width="90" DisplayMemberBinding="{Binding State}"/>
-                                <GridViewColumn Header="启动类型" Width="100" DisplayMemberBinding="{Binding StartMode}"/>
-                                <GridViewColumn Header="判定依据" Width="220" DisplayMemberBinding="{Binding Reason}"/>
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
+                <Border Grid.Row="2" Style="{StaticResource CardBorder}" Margin="0,12,0,0" Padding="8">
+                    <Grid>
+                        <ListView x:Name="ListServices" Style="{StaticResource ListViewBase}" AlternationCount="2">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Width="46">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          Click="SvcCheck_Click" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="220">
+                                        <GridViewColumnHeader Style="{StaticResource SortHeader}" Tag="Name" Click="ServiceHeader_Click">服务名</GridViewColumnHeader>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate><TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/></DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="250">
+                                        <GridViewColumnHeader Style="{StaticResource SortHeader}" Tag="DisplayName" Click="ServiceHeader_Click">显示名</GridViewColumnHeader>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate><TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"/></DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="90">
+                                        <GridViewColumnHeader Style="{StaticResource SortHeader}" Tag="State" Click="ServiceHeader_Click">状态</GridViewColumnHeader>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate><TextBlock Text="{Binding State}"/></DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="100">
+                                        <GridViewColumnHeader Style="{StaticResource SortHeader}" Tag="StartMode" Click="ServiceHeader_Click">启动类型</GridViewColumnHeader>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate><TextBlock Text="{Binding StartMode}"/></DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="220">
+                                        <GridViewColumnHeader Style="{StaticResource SortHeader}" Tag="Reason" Click="ServiceHeader_Click">判定依据</GridViewColumnHeader>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate><TextBlock Text="{Binding Reason}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.SubText}"/></DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <StackPanel x:Name="ServicesEmpty" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource EmptyIcon}" Foreground="{DynamicResource Brush.Green}" Text="✓"/>
+                            <TextBlock x:Name="ServicesEmptyText" Text="没有命中厂商关键字的候选服务" FontSize="13" Foreground="{DynamicResource Brush.SubText}" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
                 </Border>
-                <TextBlock x:Name="ServicesSummary" Grid.Row="2" Style="{StaticResource Sub}" Margin="6,10,0,4" Text="尚未扫描。"/>
+                <TextBlock x:Name="ServicesSummary" Grid.Row="3" Style="{StaticResource Sub}" Margin="6,10,0,4" Text="正在自动扫描…"/>
             </Grid>
 
             <!-- [Page Drivers] -->
             <Grid x:Name="PageDrivers" Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <Grid>
+                <StackPanel>
+                    <TextBlock Style="{StaticResource PageTitle}" Text="驱动包（DriverStore）"/>
+                    <TextBlock Style="{StaticResource Sub}" Margin="0,7,0,0"
+                               Text="未被在线设备引用的驱动包。仅「可清理」项允许删除；「软件」属于已安装软件；「保留」为当前平台组件。"/>
+                </StackPanel>
+                <Grid Grid.Row="1" Margin="0,14,0,0">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="300"/>
                         <ColumnDefinition/>
-                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource PageTitle}" Text="驱动包（DriverStore）"/>
-                        <TextBlock Style="{StaticResource Sub}" Margin="0,7,0,0"
-                                   Text="未被在线设备引用的驱动包。仅「可清理」项允许删除；「软件」属于已安装软件；「保留」为当前平台组件。"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                        <Button x:Name="BtnScanDrivers" Style="{StaticResource BtnGhost}" Content="扫描" Click="BtnScanDrivers_Click"/>
-                        <Button x:Name="BtnDeleteDrivers" Style="{StaticResource BtnDanger}" Content="删除所选「可清理」" Margin="8,0,0,0" Click="BtnDeleteDrivers_Click"/>
+                    <TextBox x:Name="SearchDrivers" Style="{StaticResource SearchBox}" Tag="搜索发布名 / INF / 提供商…"
+                             TextChanged="SearchDrivers_TextChanged"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="BtnScanDrivers" Style="{StaticResource BtnGhost}" Content="重新扫描" Click="BtnScanDrivers_Click"/>
+                        <Button x:Name="BtnSelectAllDrivers" Style="{StaticResource BtnGhost}" Content="全选「可清理」(Ctrl+A)" Margin="8,0,0,0" Click="BtnSelectAllDrivers_Click"/>
+                        <Button x:Name="BtnDeleteDrivers" Style="{StaticResource BtnDanger}" Content="删除所选「可清理」" Margin="8,0,0,0"
+                                IsEnabled="False" Click="BtnDeleteDrivers_Click"/>
                     </StackPanel>
                 </Grid>
-                <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,16,0,0" Padding="8">
-                    <ListView x:Name="ListDrivers" Style="{StaticResource ListViewBase}" AlternationCount="2">
-                        <ListView.View>
-                            <GridView>
-                                <GridViewColumn Width="46">
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <CheckBox IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                      IsEnabled="{Binding CanSelect}"
-                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                                <GridViewColumn Header="发布名" Width="120" DisplayMemberBinding="{Binding PublishedName}"/>
-                                <GridViewColumn Header="原始 INF" Width="220" DisplayMemberBinding="{Binding OriginalName}"/>
-                                <GridViewColumn Header="提供商" Width="230" DisplayMemberBinding="{Binding Provider}"/>
-                                <GridViewColumn Header="版本" Width="170" DisplayMemberBinding="{Binding Version}"/>
-                                <GridViewColumn Header="判定" Width="110" DisplayMemberBinding="{Binding Risk}"/>
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
+                <Border Grid.Row="2" Style="{StaticResource CardBorder}" Margin="0,12,0,0" Padding="8">
+                    <Grid>
+                        <ListView x:Name="ListDrivers" Style="{StaticResource ListViewBase}" AlternationCount="2">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Width="46">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          IsEnabled="{Binding CanSelect}" Click="DrvCheck_Click"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="120">
+                                        <GridViewColumnHeader Style="{StaticResource SortHeader}" Tag="PublishedName" Click="DriverHeader_Click">发布名</GridViewColumnHeader>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate><TextBlock Text="{Binding PublishedName}"/></DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="220">
+                                        <GridViewColumnHeader Style="{StaticResource SortHeader}" Tag="OriginalName" Click="DriverHeader_Click">原始 INF</GridViewColumnHeader>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate><TextBlock Text="{Binding OriginalName}" TextTrimming="CharacterEllipsis"/></DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="230">
+                                        <GridViewColumnHeader Style="{StaticResource SortHeader}" Tag="Provider" Click="DriverHeader_Click">提供商</GridViewColumnHeader>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate><TextBlock Text="{Binding Provider}" TextTrimming="CharacterEllipsis"/></DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="170">
+                                        <GridViewColumnHeader Style="{StaticResource SortHeader}" Tag="Version" Click="DriverHeader_Click">版本</GridViewColumnHeader>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate><TextBlock Text="{Binding Version}" Foreground="{DynamicResource Brush.SubText}"/></DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="110">
+                                        <GridViewColumnHeader Style="{StaticResource SortHeader}" Tag="Risk" Click="DriverHeader_Click">判定</GridViewColumnHeader>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock FontSize="11.5" Padding="7,2.5" Text="{Binding Risk}" TextAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.SubText}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Risk}" Value="可清理">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Green}"/>
+                                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Risk}" Value="软件">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Warn}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <StackPanel x:Name="DriversEmpty" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource EmptyIcon}" Foreground="{DynamicResource Brush.Green}" Text="✓"/>
+                            <TextBlock x:Name="DriversEmptyText" Text="没有未使用的驱动包" FontSize="13" Foreground="{DynamicResource Brush.SubText}" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
                 </Border>
-                <TextBlock x:Name="DriversSummary" Grid.Row="2" Style="{StaticResource Sub}" Margin="6,10,0,4" Text="尚未扫描。"/>
+                <TextBlock x:Name="DriversSummary" Grid.Row="3" Style="{StaticResource Sub}" Margin="6,10,0,4" Text="正在自动扫描…"/>
             </Grid>
 
             <!-- [Page About] -->
@@ -395,34 +585,42 @@
                     <TextBlock Style="{StaticResource PageTitle}" Text="关于 WinMigrationCleaner"/>
                     <TextBlock Foreground="{DynamicResource Brush.BodyText}" FontSize="13" TextWrapping="Wrap" LineHeight="22" Margin="0,16,0,0"
                                Text="当你把 Windows 系统从一台电脑迁移到另一台（换主板、换机装老系统、笔记本换台式机），旧硬件会在系统里留下三类残留：幽灵设备记录、厂商驱动服务和 DriverStore 驱动包。本工具把这三类残留的检测与清理整合到一起，并内置多层安全保护：自动保留当前平台的核心驱动套件，识别属于已安装软件的驱动包，并默认以「只报告」方式呈现可清理项，所有删除操作均需显式确认。"/>
-                    <TextBlock Foreground="{DynamicResource Brush.BodyText}" FontSize="13" TextWrapping="Wrap" LineHeight="22" Margin="0,12,0,0"
-                               Text="本项目使用 Windows 内置的 WMI 与 pnputil，不含任何第三方二进制。所有破坏性操作均写入活动日志。"/>
                     <Border Style="{StaticResource CardBorder}" Margin="0,22,0,0">
+                        <StackPanel>
+                            <TextBlock FontWeight="SemiBold" Text="v1.1 交互改进" Foreground="{DynamicResource Brush.Text}"/>
+                            <TextBlock Foreground="{DynamicResource Brush.SubText}" FontSize="12" LineHeight="21" TextWrapping="Wrap" Margin="0,10,0,0"
+                                       Text="• 启动即自动扫描，无需手动点击&#10;• 仪表盘新增「一键清理安全项」：幽灵设备 + 可清理驱动包一次完成&#10;• 各列表页支持实时搜索过滤、点击列头排序、Ctrl+A 全选、Ctrl+F 搜索&#10;• 幽灵设备扫描后默认勾选，操作按钮实时显示已选数量、未选中时自动禁用&#10;• 活动日志可折叠，侧边导航实时显示各类残留计数"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource CardBorder}" Margin="0,14,0,0">
                         <StackPanel>
                             <TextBlock FontWeight="SemiBold" Text="安全边界" Foreground="{DynamicResource Brush.Text}"/>
                             <TextBlock Foreground="{DynamicResource Brush.SubText}" FontSize="12" LineHeight="21" TextWrapping="Wrap" Margin="0,10,0,0"
                                        Text="• 幽灵设备：仅移除 Present=false 的记录，重新插入硬件会自动重装&#10;• 驱动包：仅允许删除标记为「可清理」的项，删除前二次确认&#10;• 服务：仅显示命中厂商关键字的候选，删除前单独确认&#10;• 建议操作前创建系统还原点；删除后重启一次让变更完全生效"/>
                         </StackPanel>
                     </Border>
-                    <TextBlock Style="{StaticResource Sub}" Margin="0,18,0,20" Text="MIT License · v1.0.0"/>
+                    <TextBlock Style="{StaticResource Sub}" Margin="0,18,0,20" Text="MIT License · v1.1.0"/>
                 </StackPanel>
             </ScrollViewer>
 
             <!-- [Activity log] -->
-            <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,16,0,0" Padding="14,10">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition/>
-                    </Grid.RowDefinitions>
+            <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,14,0,0" Padding="14,9">
+                <StackPanel>
                     <Grid>
-                        <TextBlock Style="{StaticResource Sub}" Text="活动日志（每次操作都有记录）"/>
-                        <Button x:Name="BtnClearLog" Style="{StaticResource BtnGhost}" Content="清空" FontSize="11" Padding="9,3"
-                                HorizontalAlignment="Right" VerticalAlignment="Top" Click="BtnClearLog_Click"/>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource Sub}" Text="活动日志（每次操作都有记录）" VerticalAlignment="Center"/>
+                        <Button x:Name="BtnClearLog" Grid.Column="1" Style="{StaticResource BtnGhost}" Content="清空" FontSize="11" Padding="9,3"
+                                VerticalAlignment="Top" Click="BtnClearLog_Click"/>
+                        <Button x:Name="BtnToggleLog" Grid.Column="2" Style="{StaticResource BtnGhost}" Content="收起 ▾" FontSize="11" Padding="9,3"
+                                Margin="8,0,0,0" VerticalAlignment="Top" Click="BtnToggleLog_Click"/>
                     </Grid>
-                    <ListBox x:Name="LogList" Grid.Row="1" Background="Transparent" BorderThickness="0"
+                    <ListBox x:Name="LogList" Background="Transparent" BorderThickness="0" Height="118"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                             VirtualizingPanel.ScrollUnit="Pixel" Margin="0,4,0,0"
+                             VirtualizingPanel.ScrollUnit="Pixel" Margin="0,6,0,0"
                              FontFamily="Consolas, Microsoft YaHei UI">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
@@ -449,7 +647,7 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
-                </Grid>
+                </StackPanel>
             </Border>
 
             <!-- [Progress bar] -->
@@ -463,7 +661,7 @@
                     <ColumnDefinition/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock x:Name="StatusText" Style="{StaticResource Sub}" Text="就绪" VerticalAlignment="Center"/>
+                <TextBlock x:Name="StatusText" Style="{StaticResource Sub}" Text="正在自动扫描…" VerticalAlignment="Center"/>
                 <Button x:Name="BtnBusy" Grid.Column="1" Style="{StaticResource BtnGhost}" Content="■ 停止" FontSize="11" Padding="9,3"
                         Visibility="Collapsed" Click="BtnBusy_Click"/>
             </Grid>

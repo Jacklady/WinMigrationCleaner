@@ -10,7 +10,8 @@ namespace WinMigrationCleaner
         public bool IsGhost { get; set; }
         public string Status => IsGhost ? "幽灵设备" : "本机所需";
         public bool CanSelect => IsGhost;
-        public bool Selected { get; set; }
+        bool _selected;
+        public bool Selected { get => _selected; set { if (_selected != value) { _selected = value; Raise(nameof(Selected)); } } }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         void Raise(string n) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
@@ -24,7 +25,8 @@ namespace WinMigrationCleaner
         public string StartMode { get; set; } = "";
         public string PathName { get; set; } = "";
         public string Reason { get; set; } = "";
-        public bool Selected { get; set; }
+        bool _selected;
+        public bool Selected { get => _selected; set { if (_selected != value) { _selected = value; Raise(nameof(Selected)); } } }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         void Raise(string n) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
@@ -38,7 +40,8 @@ namespace WinMigrationCleaner
         public string Provider { get; set; } = "";
         public string Risk { get; set; } = "";   // 可清理 / 软件 / 保留
         public bool CanSelect => Risk == "可清理";
-        public bool Selected { get; set; }
+        bool _selected;
+        public bool Selected { get => _selected; set { if (_selected != value) { _selected = value; Raise(nameof(Selected)); } } }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         void Raise(string n) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
